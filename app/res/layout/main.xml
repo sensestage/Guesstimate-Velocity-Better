@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout android:id="@+id/LinearLayout01" android:layout_width="fill_parent" android:layout_height="fill_parent" xmlns:android="http://schemas.android.com/apk/res/android">
+    <ScrollView android:id="@+id/ScrollView01" android:layout_width="wrap_content" android:layout_height="wrap_content">
+        <LinearLayout android:id="@+id/LinearLayout02" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="vertical">
+            <CheckBox android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/AccelerometerCheckBox" android:text="Accelerometer" android:checked="true"></CheckBox>
+            <CheckBox android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/LinearAccelerometerCheckBox" android:text="Linear Accelerometer" android:checked="true"></CheckBox>
+            <CheckBox android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Orientation" android:checked="true" android:id="@+id/OrientationCheckBox"></CheckBox>
+        <CheckBox android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Magnetic field" android:checked="true" android:id="@+id/MagneticCheckBox"></CheckBox>
+<CheckBox android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Gyro" android:checked="true" android:id="@+id/GyroCheckBox"></CheckBox>
+<CheckBox android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Light" android:checked="true" android:id="@+id/LightCheckBox"></CheckBox>
+
+<Spinner android:layout_height="wrap_content" android:layout_width="fill_parent" android:id="@+id/SamplingRateSpinner"></Spinner><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/RecordingStatusTextView" android:text="Not recording"></TextView><LinearLayout android:id="@+id/LinearLayout03" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal"><Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Start recording" android:id="@+id/StartButton"></Button><Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/StopButton" android:text="Stop recording" android:clickable="true"></Button>
+
+</LinearLayout><Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/ShowResultsButton" android:text="Show recorded logs"></Button>
+
+
+
+
+</LinearLayout></ScrollView>
+
+
+
+
+</LinearLayout>

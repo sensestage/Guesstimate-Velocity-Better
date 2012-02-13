@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    
+    <string name="app_name">Guesstimate Velocity Better</string>
+<string name="sampling_rate_prompt">Select sampling rate</string>
+<string name="status_recording_stopped">Recording stopped</string>
+<string name="status_recording_running">Recording sensors data...</string>
+<string-array name="sampling_rate_values"><item>Fastest</item>
+<item>Game</item>
+<item>User Interface</item>
+<item>Normal</item>
+</string-array>
+<string name="error_sampling_rate_not_selected">Please select a sampling rate</string>
+<string name="error_storage_error">Error while trying to save the logfile in the external storage</string>
+<string-array name="sensors_list_values"><item>Accelerometer</item>
+<item>Linear Acceleration</item><item>Orientation</item>
+<item>Magnetic field</item>
+<item>Light</item>
+
+</string-array>
+<string name="error_no_sensor_selected">Please select at least one sensor</string>
+</resources>
