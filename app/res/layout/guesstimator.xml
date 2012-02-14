@@ -2,11 +2,17 @@
 
 <LinearLayout android:id="@+id/LinearLayout01" android:layout_width="fill_parent" android:layout_height="fill_parent" xmlns:android="http://schemas.android.com/apk/res/android" android:orientation="vertical" android:padding="10px">
     <LinearLayout android:id="@+id/LinearLayout02" android:layout_width="fill_parent" android:layout_height="wrap_content" android:orientation="vertical">
-      <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/EstimatorStatusTextView" android:text="Not running" android:gravity="center_vertical|center_horizontal"></TextView>
-      <LinearLayout android:id="@+id/LinearLayout03" android:layout_width="fill_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+        <TableLayout android:id="@+id/TableLayout2" android:layout_width="fill_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:padding="10px">
+            <TableRow>
+      <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/EstimatorStatusTextView" android:text="Not running" android:gravity="center_vertical|center_horizontal" android:padding="10px"></TextView>
+      <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/TransmitterStatusTextView" android:text="Not running" android:gravity="center_vertical|center_horizontal" android:padding="10px"></TextView>
+      </TableRow>
+      <TableRow>
 		<Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Start estimating" android:id="@+id/StartButton"></Button>
 		<Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/StopButton" android:text="Stop estimating" android:clickable="true"></Button>
-      </LinearLayout>
+		</TableRow>
+      </TableLayout>
+      
 	  <TextView android:textAppearance="?android:attr/textAppearanceLarge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/MotionStatusTextView" android:text="Still" android:gravity="center_vertical|center_horizontal"></TextView>
       <TableLayout android:id="@+id/LinearLayout04" android:layout_width="fill_parent" android:layout_height="wrap_content" android:stretchColumns="1" android:padding="10px">
 	<TableRow>
@@ -110,7 +116,26 @@
 	  </EditText>
 	</TableRow>
       </TableLayout>
-      
+
+	<TextView android:textAppearance="?android:attr/textAppearanceLarge" android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/SettingLabelTextView" android:text="SERVER" android:gravity="center_vertical|center_horizontal"></TextView>
+	<TableLayout android:id="@+id/TableLayout2" android:layout_width="fill_parent" android:layout_height="wrap_content" android:stretchColumns="1">
+	  <TableRow>
+	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/HostLabelTextView" android:text="Host"></TextView>
+	    <EditText android:id="@+id/editHost" android:layout_width="wrap_content" android:layout_height="wrap_content" android:inputType="numberDecimal" android:layout_weight="1" android:text="192.168.1.23" ></EditText>  
+	  </TableRow>
+   	  <TableRow>
+	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/PortLabelTextView" android:text="Port"></TextView>
+	      <EditText android:id="@+id/editPort" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="5555" ></EditText>
+	  </TableRow>
+   	    
+	  <TableRow>
+	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/WindowLabelTextView2" android:text="Buffer size"></TextView>
+	      <EditText android:id="@+id/editBuffer" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="200" ></EditText>
+	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/UpdateLabelTextView2" android:text="Delta time"></TextView>
+	      <EditText android:id="@+id/editUpdateServer" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="10" ></EditText>
+	  </TableRow>
+   	  </TableLayout>
+   	  
     </LinearLayout>
   </ScrollView>
 
