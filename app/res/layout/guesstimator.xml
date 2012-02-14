@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout android:id="@+id/LinearLayout01" android:layout_width="fill_parent" android:layout_height="fill_parent" xmlns:android="http://schemas.android.com/apk/res/android" android:orientation="vertical" android:padding="10px">
+    <LinearLayout android:id="@+id/LinearLayout02" android:layout_width="fill_parent" android:layout_height="wrap_content" android:orientation="vertical">
+      <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/EstimatorStatusTextView" android:text="Not running" android:gravity="center_vertical|center_horizontal"></TextView>
+      <LinearLayout android:id="@+id/LinearLayout03" android:layout_width="fill_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+		<Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Start estimating" android:id="@+id/StartButton"></Button>
+		<Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/StopButton" android:text="Stop estimating" android:clickable="true"></Button>
+      </LinearLayout>
+	  <TextView android:textAppearance="?android:attr/textAppearanceLarge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/MotionStatusTextView" android:text="Still" android:gravity="center_vertical|center_horizontal"></TextView>
+      <TableLayout android:id="@+id/LinearLayout04" android:layout_width="fill_parent" android:layout_height="wrap_content" android:stretchColumns="1" android:padding="10px">
+	<TableRow>
+	  <TextView android:textAppearance="?android:attr/textAppearanceLarge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/VelocityStatusLabelTextView" android:text="Velocity  "></TextView>
+	  <TextView android:textAppearance="?android:attr/textAppearanceLarge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/VelocityStatusTextView" android:text="0.0 m/s"></TextView>
+	  <TextView android:textAppearance="?android:attr/textAppearanceLarge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/VelocityStatusTextView2" android:text="0.0 km/h"></TextView>
+	</TableRow>
+	
+	<TableRow>
+	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/AxisLabelTextView" android:text="AXIS"></TextView>
+	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/MeanLabelTextView" android:text="MEAN"></TextView>
+	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/StdDevLabelTextView" android:text="STD DEV"></TextView>
+	</TableRow>
+
+	<TableRow>
+	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/FXStatusLabelTextView" android:text="Forward"></TextView>
+	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/FXMeanTextView" android:text="0.0 m/s^2"></TextView>
+	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/FXStdDevTextView" android:text="0.0 m/s^2"></TextView>
+	</TableRow>
+
+	<TableRow>
+	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/SXStatusLabelTextView" android:text="Sideways"></TextView>
+	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/SXMeanTextView" android:text="0.0 m/s^2"></TextView>
+	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/SXStdDevTextView" android:text="0.0 m/s^2"></TextView>
+	</TableRow>
+	
+	<TableRow>
+	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/GXStatusLabelTextView" android:text="Gravity"></TextView>
+	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/GXMeanTextView" android:text="0.0 m/s^2"></TextView>
+	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/GXStdDevTextView" android:text="0.0 m/s^2"></TextView>
+	</TableRow>
+      </TableLayout>
+    </LinearLayout>
+    
+    <ScrollView android:id="@+id/ScrollView01" android:layout_width="fill_parent" android:layout_height="wrap_content">
+      <LinearLayout android:id="@+id/LinearLayout05" android:layout_width="fill_parent" android:layout_height="wrap_content" android:orientation="vertical">
+	<TextView android:textAppearance="?android:attr/textAppearanceLarge" android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/SettingLabelTextView" android:text="SETTINGS" android:gravity="center_vertical|center_horizontal"></TextView>
+	<LinearLayout android:id="@+id/LinearLayout06" android:layout_width="fill_parent" android:layout_height="wrap_content" android:orientation="horizontal" >
+	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/SensorLabelTextView" android:text="Sensor"></TextView>
+	  <RadioGroup android:id="@+id/radioGroupAcc" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
+	    <RadioButton android:id="@+id/radioAcc" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="accelero" />
+	    <RadioButton android:id="@+id/radioLinAcc" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" android:text="linear accelero" />
+	  </RadioGroup>
+	</LinearLayout>
+	<LinearLayout android:id="@+id/LinearLayout07" android:layout_width="fill_parent" android:layout_height="wrap_content" android:orientation="horizontal" >
+	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/ForwardAxisLabelTextView" android:text="Forward axis"></TextView>
+	  <RadioGroup android:id="@+id/radioGroupForward" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
+	    <RadioButton android:id="@+id/radioFX" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="X" />
+	    <RadioButton android:id="@+id/radioFY" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" android:text="Y" />
+	    <RadioButton android:id="@+id/radioFZ" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Z" />
+	  </RadioGroup>
+	</LinearLayout>
+	<LinearLayout android:id="@+id/LinearLayout08" android:layout_width="fill_parent" android:layout_height="wrap_content" android:orientation="horizontal" >
+	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/SidewaysAxisLabelTextView" android:text="Sideways axis"></TextView>
+	  <RadioGroup android:id="@+id/radioGroupSideways" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
+	    <RadioButton android:id="@+id/radioSX" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="X" />
+	    <RadioButton android:id="@+id/radioSY" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Y" />
+	    <RadioButton android:id="@+id/radioSZ" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" android:text="Z" />
+	  </RadioGroup>
+	</LinearLayout>
+	<LinearLayout android:id="@+id/LinearLayout09" android:layout_width="fill_parent" android:layout_height="wrap_content" android:orientation="horizontal" >
+	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/GravityAxisLabelTextView" android:text="Gravity axis"></TextView>
+	  <RadioGroup android:id="@+id/radioGroupGravity" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
+	    <RadioButton android:id="@+id/radioGX" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" android:text="X" />
+	    <RadioButton android:id="@+id/radioGY" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Y" />
+	    <RadioButton android:id="@+id/radioGZ" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Z" />
+	  </RadioGroup>
+	</LinearLayout>   
+
+	<TableLayout android:id="@+id/TableLayout" android:layout_width="fill_parent" android:layout_height="wrap_content" android:stretchColumns="1">
+	  <TableRow>
+	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/WindowLabelTextView" android:text="Window size"></TextView>
+	      <EditText android:id="@+id/editWindow" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="200" ></EditText>
+	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/UpdateLabelTextView" android:text="Delta time"></TextView>
+	      <EditText android:id="@+id/editUpdate" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="10" ></EditText>
+	      	  </TableRow>
+	  <TableRow>
+	    <TextView android:textAppearance="?android:attr/textAppearanceLarge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/ThresholdLabelTextView" android:text="Thresholds"></TextView>
+	  </TableRow>            
+	  <TableRow>
+	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/AccelLabelTextView" android:text="Acceleration"></TextView>
+	    <EditText android:id="@+id/acceleration" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.3">
+	    </EditText>
+	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/SteadyLabelTextView" android:text="Steady"></TextView>
+	    <EditText android:id="@+id/steady" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.2"></EditText>
+	  </TableRow>
+	  <TableRow>
+	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/Decel1LabelTextView" android:text="Deceleration 1"></TextView>
+	    <EditText android:id="@+id/decelThresS" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.25">
+	    </EditText>
+	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/Decel2LabelTextView" android:text="Deceleration 2"></TextView>
+	    <EditText android:id="@+id/decelThresM" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="-0.5">
+	    </EditText>
+	  </TableRow>
+	  <TableRow>
+	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/Still1LabelTextView" android:text="Still 1"></TextView>
+	    <EditText android:id="@+id/stillThres1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.1">
+	    </EditText>
+	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/Still2LabelTextView" android:text="Still 2"></TextView>
+	  <EditText android:id="@+id/stillThres2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.1">
+	  </EditText>
+	</TableRow>
+      </TableLayout>
+      
+    </LinearLayout>
+  </ScrollView>
+
+</LinearLayout>
