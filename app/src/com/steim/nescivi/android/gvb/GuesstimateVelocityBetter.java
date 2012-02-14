@@ -1,8 +1,8 @@
 package com.steim.nescivi.android.gvb;
 
-//import com.mrstockinterfaces.speedometer.R;
-//import com.mrstockinterfaces.speedometer.VelocityService;
 import com.steim.nescivi.android.gvb.VelocityEstimator;
+//import com.steim.nescivi.android.gvb.VelocityTransmitter;
+import com.steim.nescivi.android.gvb.CircularStringArrayBuffer;
 
 import android.app.Activity;
 
@@ -12,6 +12,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 //import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -28,9 +29,33 @@ import android.widget.TextView;
 import android.widget.Toast;
 //import android.content.SharedPreferences;
 
+import java.net.Socket;
+import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.IOException;
+
+
+
 public class GuesstimateVelocityBetter extends Activity {
 
 	Messenger mVelService = null;
+//	Messenger mTransmitService = null;
+/*	
+	private String mHost;
+	private int mPort;
+	private int mBufferSize;
+	private int mUpdateServerTime;
+	private float mSpeed;
+	private CircularStringArrayBuffer mBuffer;
+*/	
+//	private Timer uploadTimer;
+//	private TimerTask mSendDataTimerTask;
 	
   //  private SharedPreferences mPrefs;
   //  private SharedPreferences.Editor mPrefsEdit;
@@ -47,20 +72,18 @@ public class GuesstimateVelocityBetter extends Activity {
     	public void handleMessage(Message msg)
     	{
     		TextView tv;
-    		//Vector3f vec;
-    		//Location loc;
     		switch (msg.what)
     		{
     			case VelocityEstimator.MSG_SPEED:
-    	    		tv = (TextView) findViewById(R.id.EstimatorStatusTextView);
-    				tv.setText(String.format("Estimation running"));
+    				// add the data to the buffer:
+    				//addDataToBuffer( msg.arg1 );
+    				// update GUI:
     				tv = (TextView) findViewById(R.id.VelocityStatusTextView);
     				tv.setText(String.format("%.1f m/s", msg.arg1 / 10.f ) );
     				tv = (TextView) findViewById(R.id.VelocityStatusTextView2);
     				tv.setText(String.format("%.1f km/h", msg.arg1 * 0.36f ) );
     				tv = (TextView) findViewById(R.id.MotionStatusTextView);
     				tv.setText( GuesstimateVelocityBetter.SpeedStates[ msg.arg2 ] );
-    				//tv.setText(String.format("hello world");
     				break;
     			case VelocityEstimator.MSG_FACC:
     				tv = (TextView) findViewById(R.id.FXMeanTextView);
@@ -78,7 +101,7 @@ public class GuesstimateVelocityBetter extends Activity {
     				tv = (TextView) findViewById(R.id.GXMeanTextView);
     				tv.setText(String.format("%.2f m/s^2", msg.arg1 / 100.f ) );
     				tv = (TextView) findViewById(R.id.GXStdDevTextView);
-    				tv.setText(String.format("%.2f m/s^2", msg.arg2 / 100f ) );
+    				tv.setText(String.format("%.2f m/s^2", msg.arg2 / 100.f ) );
     				break;
     			default:
     				super.handleMessage(msg);
@@ -121,7 +144,42 @@ public class GuesstimateVelocityBetter extends Activity {
 			return false;
 		}
     }
+/*
+    private boolean register_with_TransmitterService()
+    {
+    	if (mTransmitService == null) {
+    		return false;
+    	}
+    	
+		Message msg = Message.obtain(null, VelocityTransmitter.MSG_REGISTER_GUI_CLIENT);
+		msg.replyTo = mIncomingMessenger;
+		
+		try {
+			mTransmitService.send(msg);
+			return true;
+		} catch (RemoteException e) {
+			return false;
+		}
+    }
     
+    private boolean unregister_from_TransmitterService()
+    {
+    	if (mTransmitService == null) {
+    		return false;
+    	}
+    	
+		Message msg = Message.obtain(null, VelocityTransmitter.MSG_UNREGISTER_GUI_CLIENT);
+		msg.replyTo = mIncomingMessenger;
+		
+		try {
+			mTransmitService.send(msg);
+			return true;
+		} catch (RemoteException e)	{
+			return false;
+		}
+    }
+    */
+
     public void set_sensor()
     {   
     	RadioGroup rg = (RadioGroup) findViewById(R.id.radioGroupAcc);
@@ -386,7 +444,7 @@ public class GuesstimateVelocityBetter extends Activity {
     	} 
 
     	if (mVelService != null) {
-	    	Message msg = Message.obtain(null, VelocityEstimator.MSG_SET_THRESH_DECEL, (int) (dec1 * 100), (int) (dec1 * 100) );
+	    	Message msg = Message.obtain(null, VelocityEstimator.MSG_SET_THRESH_DECEL, (int) (dec1 * 100), (int) (dec2 * 100) );
 	    	try {
 	    		mVelService.send(msg);
 	    	} catch (RemoteException e) {
@@ -422,7 +480,7 @@ public class GuesstimateVelocityBetter extends Activity {
     	} 
 
     	if (mVelService != null) {
-	    	Message msg = Message.obtain(null, VelocityEstimator.MSG_SET_THRESH_STILL, (int) (dec1 * 100), (int) (dec1 * 100) );
+	    	Message msg = Message.obtain(null, VelocityEstimator.MSG_SET_THRESH_STILL, (int) (dec1 * 100), (int) (dec2 * 100) );
 	    	try {
 	    		mVelService.send(msg);
 	    	} catch (RemoteException e) {
@@ -437,6 +495,67 @@ public class GuesstimateVelocityBetter extends Activity {
     	} 
     	*/   	
     } 
+
+    public void set_ip(){    	
+    	EditText ed = (EditText) findViewById(R.id.editHost);
+    	mHost = ed.getText().toString();
+    	
+    	if (mVelService != null) {
+    		Bundle b = new Bundle();
+        	b.putString("host", mHost );
+	    	Message msg = Message.obtain(null, VelocityEstimator.MSG_SET_IP );
+	    	msg.setData(b);
+	    	
+	    	try {
+	    		mVelService.send(msg);
+	    	} catch (RemoteException e) {
+	    		mVElService = null;
+	    	}
+    	}
+    	*/
+    }
+    
+    public void set_port(){
+    	EditText ed = (EditText) findViewById(R.id.editPort );
+    	mPort = Integer.parseInt( ed.getText().toString() );
+    	
+    	if (mVelService != null) {
+	    	Message msg = Message.obtain(null, VelocityEstimator.MSG_SET_PORT, mPort );
+	    	try {
+	    		mVelService.send(msg);
+	    	} catch (RemoteException e) {
+	    		mVelService = null;
+	    	}
+    	}
+    	*/
+    }
+    
+    public void set_buffer_size(){    	
+    	EditText ed = (EditText) findViewById(R.id.editBuffer );
+    	mBufferSize = Integer.parseInt( ed.getText().toString() );
+    	
+    	if (mVelService != null) {
+	    	Message msg = Message.obtain(null, VelocityEstimator.MSG_SET_BUFFER_SIZE, mBufferSize );
+	    	try {
+	    		mVelService.send(msg);
+	    	} catch (RemoteException e) {
+	    		mVelService = null;
+	    	}
+    	}
+    }
+
+    public void set_update_server(){    	
+    	EditText ed = (EditText) findViewById(R.id.editUpdateServer );
+    	mUpdateServerTime = Integer.parseInt( ed.getText().toString() ) * 1000;
+    	if (mTransmitService != null) {
+	    	Message msg = Message.obtain(null, VelocityEstimator.MSG_SET_UPDATE_INTERVAL, mUpdateServerTime );
+	    	try {
+	    		mVelService.send(msg);
+	    	} catch (RemoteException e) {
+	    		mVelService = null;
+	    	}
+    	}
+    }
 
     private ServiceConnection mVelServiceConnection = new ServiceConnection()
     {
@@ -457,8 +576,22 @@ public class GuesstimateVelocityBetter extends Activity {
     		set_threshold_deceleration();
     		set_threshold_steady();
     		set_threshold_still();
+
+
+    		// uploader
+    		set_ip();
+    		set_port();
+    		set_buffer_size();
+    		set_update_server();
     		
+    		/*
+    		setupBuffer();
+    		setupUploader();
+		*/
+
     		Toast.makeText(GuesstimateVelocityBetter.this, "connected to VelocityEstimator", Toast.LENGTH_SHORT).show();
+    		TextView tv1 = (TextView) findViewById(R.id.EstimatorStatusTextView);
+		tv1.setText(String.format("Estimation running"));
     	}
     	
     	public void onServiceDisconnected(ComponentName class_name)
@@ -466,10 +599,40 @@ public class GuesstimateVelocityBetter extends Activity {
     		mVelService = null;
     		Toast.makeText(GuesstimateVelocityBetter.this, "disconnected from VelocityEstimator", Toast.LENGTH_SHORT).show();
     		TextView tv1 = (TextView) findViewById(R.id.EstimatorStatusTextView);
-			tv1.setText(String.format("Estimation not running"));
+		tv1.setText(String.format("Estimation not running"));
     	}
     };
-    
+
+    /*
+    private ServiceConnection mTransmitServiceConnection = new ServiceConnection()
+    {
+    	public void onServiceConnected(ComponentName class_name, IBinder service) {
+    		mTransmitService = new Messenger(service);
+    		
+    		if (!register_with_TransmitterService()){
+    			return;
+    		}
+    		
+//    		set_ip();
+//    		set_port();
+//    		set_buffer_size();
+//    		set_update_server();
+    		
+    		Toast.makeText(GuesstimateVelocityBetter.this, "connected to VelocityTransmitter", Toast.LENGTH_SHORT).show();
+    		TextView tv1 = (TextView) findViewById(R.id.TransmitterStatusTextView);
+			tv1.setText(String.format("Transmitter running"));
+    	}
+    	
+    	public void onServiceDisconnected(ComponentName class_name)
+    	{
+    		mTransmitService = null;
+    		Toast.makeText(GuesstimateVelocityBetter.this, "disconnected from VelocityTransmitter", Toast.LENGTH_SHORT).show();
+    		TextView tv1 = (TextView) findViewById(R.id.TransmitterStatusTextView);
+			tv1.setText(String.format("Transmitter not running"));
+    	}
+    };
+*/
+
 
     /** Called when the activity is first created. */
     @Override
@@ -500,6 +663,12 @@ public class GuesstimateVelocityBetter extends Activity {
         {
     		Toast.makeText(GuesstimateVelocityBetter.this, "VelocityEstimator connected", Toast.LENGTH_SHORT).show();	
         }
+        /*
+        if (register_with_TransmitterService())
+        {
+    		Toast.makeText(GuesstimateVelocityBetter.this, "VelocityTransmitter connected", Toast.LENGTH_SHORT).show();	
+        }
+        */
     }
 
     protected void onPause() 
@@ -509,6 +678,12 @@ public class GuesstimateVelocityBetter extends Activity {
         {
     		Toast.makeText(GuesstimateVelocityBetter.this, "VelocityEstimator disconnected", Toast.LENGTH_SHORT).show();	
         }
+        /*
+        if (unregister_from_TransmitterService())
+        {
+    		Toast.makeText(GuesstimateVelocityBetter.this, "VelocityTransmitter connected", Toast.LENGTH_SHORT).show();	
+        }
+        */
     }
  
     private void setButtonsListeners() {
@@ -521,6 +696,7 @@ public class GuesstimateVelocityBetter extends Activity {
 			@Override
 			public void onClick(View v) {
 				startEstimateService();
+//				startTransmitterService();
 			}
 		});
     	
@@ -530,6 +706,7 @@ public class GuesstimateVelocityBetter extends Activity {
 			@Override
 			public void onClick(View v) {
 				stopEstimateService();
+//				stopTransmitterService();
 			}
 		});
     }
@@ -550,24 +727,119 @@ public class GuesstimateVelocityBetter extends Activity {
     	stopService(intent);
     	toggleUIStatus(false);
     }
-        
-    	private void toggleUIStatus(boolean recording) {
-    		// Toggle start, stop, show logs buttons
-        	findViewById(R.id.StartButton).setEnabled(!recording);
-        	findViewById(R.id.StopButton).setEnabled(recording);
 
-        	// Enable or disable options
+/*    
+    private void startTransmitterService()
+    {
+    	Intent intent = new Intent(GuesstimateVelocityBetter.this, VelocityTransmitter.class);
+    	startService(intent);
+    	bindService(intent, mTransmitServiceConnection, Context.BIND_AUTO_CREATE);
+    	toggleUIStatus(true);
+    }
+    
+    private void stopTransmitterService()
+    {
+    	Intent intent = new Intent(GuesstimateVelocityBetter.this, VelocityTransmitter.class);
+    	unregister_from_TransmitterService();
+    	unbindService(mTransmitServiceConnection);
+    	stopService(intent);
+    	//toggleUIStatus(false);
+    }
+*/
 
-        	// disable sensor select
-        	findViewById(R.id.radioAcc).setEnabled(!recording);
-        	findViewById(R.id.radioLinAcc).setEnabled(!recording);
-        	// disable window size setting
-        	findViewById(R.id.editWindow).setEnabled(!recording);
+    private void toggleUIStatus(boolean recording) {
+    	// Toggle start, stop, show logs buttons
+       	findViewById(R.id.StartButton).setEnabled(!recording);
+       	findViewById(R.id.StopButton).setEnabled(recording);
+
+       	// Enable or disable options
+
+       	// disable sensor select
+       	findViewById(R.id.radioAcc).setEnabled(!recording);
+       	findViewById(R.id.radioLinAcc).setEnabled(!recording);
+       	// disable window size setting
+       	findViewById(R.id.editWindow).setEnabled(!recording);
         	        	
-        	// Change status text
+       	// Change status text
 //        	TextView tv = ((TextView) findViewById(R.id.RecordingStatusTextView));
 //        	tv.setText((recording) ? R.string.status_recording_running : R.string.status_recording_stopped);
     	}
 
+/*
+    public void setupBuffer(){
+    	mBuffer = new CircularStringArrayBuffer( mBufferSize );
+    }
 
+    private String formatDate(Date date) {
+		String format = "yy-MM-dd HH.mm.ss";
+		SimpleDateFormat formatter = new SimpleDateFormat(format);
+		return formatter.format(date); 	
+	}
+
+    private void addDataToBuffer( int newdata ){
+    	// add data to circular buffer
+    	String [] currentVals = new String[2];
+    	Date now = new Date();
+    	currentVals[0] = formatDate( now );
+    	currentVals[1] = String.format("%.2f", (float) newdata * 0.36f );
+    	mSpeed = (float) newdata * 0.36f;
+    	mBuffer.add( currentVals );
+    }
+        
+    public void setupUploader(){    	
+        this.uploadTimer = new Timer();
+    	mSendDataTimerTask = new TimerTask() {
+    		public void run() {
+    			uploadData();
+    		}
+		};
+		uploadTimer.scheduleAtFixedRate( mSendDataTimerTask, 0, mUpdateServerTime );
+
+    }
+    public void uploadData(){
+    	//VelocityBufferTransmitter uploader = new VelocityBufferTransmitter();
+    	//uploader.execute( new String[] { mHost, String.format("%i", mPort ) } );
+    	Toast.makeText(GuesstimateVelocityBetter.this, String.format("Velocity: %.2f", mSpeed ), Toast.LENGTH_SHORT).show();    	
+    }
+*/
+
+    /*
+    private class VelocityBufferTransmitter extends AsyncTask< String, Void, String > {
+    	@Override
+    	protected String doInBackground(String... urls) {
+    		String response = "";
+    		Toast.makeText(GuesstimateVelocityBetter.this, String.format("Velocity: %.2f", mSpeed ), Toast.LENGTH_SHORT).show();
+			
+    		try {
+    			
+    	        Socket s = new Socket( urls[0], Integer.parseInt( urls[1] ) );
+    	       
+    	        //outgoing stream redirect to socket
+    	        OutputStream out = s.getOutputStream();
+    	       
+    	        PrintWriter output = new PrintWriter(out);
+    	        // print the circular buffer
+    	        output.println("Hello Android!");
+    	        
+    	        //Close connection
+    	        s.close();
+    	           	       
+    		} catch (UnknownHostException e) {
+    	        // TODO Auto-generated catch block
+    	        e.printStackTrace();
+    		} catch (IOException e) {
+    	        // TODO Auto-generated catch block
+    	        e.printStackTrace();
+    		}
+    	        
+    		return response;
+    	}
+    	
+    	@Override
+    	protected void onPostExecute(String result) {
+    		TextView tv1 = (TextView) findViewById(R.id.TransmitterStatusTextView);
+			tv1.setText( result );
+    	}    	
+    }
+    */
 }
