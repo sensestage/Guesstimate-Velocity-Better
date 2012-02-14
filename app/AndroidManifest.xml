@@ -6,17 +6,24 @@
 <uses-sdk android:minSdkVersion="10" />
 <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <application android:icon="@drawable/icon" android:label="@string/app_name" android:debuggable="true">
-        <activity android:name=".SensorLoggerActivity"
-                  android:label="@string/app_name" android:screenOrientation="portrait" android:launchMode="standard">
+        <activity android:name=".GuesstimateVelocityBetter"
+                  android:label="@string/app_name" 
+                  android:screenOrientation="portrait" 
+                  android:launchMode="standard"
+                  android:windowSoftInputMode="stateUnchanged">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
+    <service android:name=".VelocityEstimator" android:label="VelocityEstimator"></service>
+    
+    <activity android:name=".SensorLoggerActivity"></activity>
 	<activity android:name=".SensorsListActivity"></activity>
 	<activity android:name=".ResultsListActivity"></activity>
 	<activity android:name=".RecorderActivity" android:screenOrientation="landscape"></activity>
+	
 	<activity android:name="org.achartengine.GraphicalActivity" />
 </application>
 
