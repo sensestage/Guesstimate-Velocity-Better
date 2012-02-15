@@ -662,7 +662,7 @@ public class VelocityEstimator extends Service {
 				}
 				break;
 			case 2: // accelerating
-				if ( mCurrentStats[0][0] < threshold_steady ){
+				if ( mCurrentStats[1][0] < threshold_steady ){
 					this.mState = 1;
 				}
 				break;	

@@ -113,7 +113,7 @@ public class GuesstimateVelocityBetter extends Activity {
         					msg.getData().getFloat( "speed" ) * 3.6f,
         					msg.getData().getFloat( "facc_mean" ),
         					msg.getData().getFloat( "facc_std" ),
-        					msg.getData().getFloat( "xacc_mean" ),
+        					msg.getData().getFloat( "sacc_mean" ),
         					msg.getData().getFloat( "sacc_std" ),
         					msg.getData().getFloat( "gacc_mean" ),
         					msg.getData().getFloat( "gacc_std" ),

@@ -58,18 +58,40 @@ public class CircularFloatArrayBuffer {
 	}
 	
 	void getStats( float[][] stats ){
-		float delta;
-	    int n = 0;
-	    //float[] mean = { (float) 0.0,(float) 0.0, (float) 0.0 };
-	    float[] M2 = { (float) 0.0,(float) 0.0, (float) 0.0 };
-	    //float[] variance;
-	    
-	    //   float stats[][] = new float[2][3];
+		float std;
 	    
 	    for ( int axis = 0; axis < 3; axis++ ){
 	    	stats[0][axis] = (float) 0.0;
 	    }
 	    
+	    // mean
+	    for (int i = 0; i < this.mSize; i++){
+	    	for ( int axis = 0; axis < 3; axis++ ){
+	    		stats[0][axis] += this.mBuffer[i][axis];
+	    	}
+	    }
+	    for ( int axis = 0; axis < 3; axis++ ){
+	    	stats[0][axis] = stats[0][axis] / this.mSize;
+	    }
+
+	    // std
+	    for (int i = 0; i < this.mSize; i++){
+	    	for ( int axis = 0; axis < 3; axis++ ){
+	    		std = (this.mBuffer[i][axis] - stats[0][axis]);
+	    		stats[1][axis] += std*std;
+	    	}
+	    }
+
+	    for ( int axis = 0; axis < 3; axis++ ){
+	    	stats[1][axis] = (float) Math.sqrt( stats[1][axis] / this.mSize ); 
+	    }
+
+	    /*
+	     * 		
+	    //float delta;
+		//int n = 0;
+	    //float[] M2 = { (float) 0.0,(float) 0.0, (float) 0.0 };
+
 	    for (int i = 0; i < this.mSize; i++){
     		n = n + 1;
 	    	for ( int axis = 0; axis < 3; axis++ ){
@@ -83,6 +105,7 @@ public class CircularFloatArrayBuffer {
 	    for ( int axis = 0; axis < 3; axis++ ){
 	    	stats[1][axis] = (float) Math.sqrt( M2[axis]/(n - 1) );
 	    }
+	    */
 	    //return stats;
 	}
 
