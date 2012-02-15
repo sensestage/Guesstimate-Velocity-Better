@@ -126,7 +126,9 @@
    	  <TableRow>
 	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/PortLabelTextView" android:text="Port"></TextView>
 	      <EditText android:id="@+id/editPort" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="5555" ></EditText>
-	  </TableRow>
+	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/PortLabelTextView" android:text="ClientID"></TextView>
+	      <EditText android:id="@+id/editClient" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="5555" ></EditText>
+	      	  </TableRow>
    	    
 	  <TableRow>
 	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/WindowLabelTextView2" android:text="Buffer size"></TextView>

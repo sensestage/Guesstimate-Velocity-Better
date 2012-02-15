@@ -2,7 +2,7 @@ package com.steim.nescivi.android.gvb;
 
 import com.steim.nescivi.android.gvb.VelocityEstimator;
 //import com.steim.nescivi.android.gvb.VelocityTransmitter;
-import com.steim.nescivi.android.gvb.CircularStringArrayBuffer;
+//import com.steim.nescivi.android.gvb.CircularStringArrayBuffer;
 
 import android.app.Activity;
 
@@ -12,7 +12,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 //import android.location.Location;
-import android.os.AsyncTask;
+//import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -29,17 +29,18 @@ import android.widget.TextView;
 import android.widget.Toast;
 //import android.content.SharedPreferences;
 
+/*
+import java.util.Timer;
+import java.util.TimerTask;
+
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Timer;
-import java.util.TimerTask;
-
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.IOException;
-
+*/
 
 
 public class GuesstimateVelocityBetter extends Activity {
@@ -74,6 +75,9 @@ public class GuesstimateVelocityBetter extends Activity {
     		TextView tv;
     		switch (msg.what)
     		{
+    			case VelocityEstimator.MSG_SERVER_UPDATE_MSG:
+    				tv = (TextView) findViewById(R.id.TransmitterStatusTextView);
+    				tv.setText(String.format("%.1f m/s", msg.arg1 / 10.f ) );
     			case VelocityEstimator.MSG_SPEED:
     				// add the data to the buffer:
     				//addDataToBuffer( msg.arg1 );
@@ -498,44 +502,54 @@ public class GuesstimateVelocityBetter extends Activity {
 
     public void set_ip(){    	
     	EditText ed = (EditText) findViewById(R.id.editHost);
-    	mHost = ed.getText().toString();
+    	String host = ed.getText().toString();
     	
     	if (mVelService != null) {
     		Bundle b = new Bundle();
-        	b.putString("host", mHost );
+        	b.putString("host", host );
 	    	Message msg = Message.obtain(null, VelocityEstimator.MSG_SET_IP );
 	    	msg.setData(b);
 	    	
 	    	try {
 	    		mVelService.send(msg);
 	    	} catch (RemoteException e) {
-	    		mVElService = null;
+	    		mVelService = null;
 	    	}
     	}
-    	*/
     }
     
     public void set_port(){
     	EditText ed = (EditText) findViewById(R.id.editPort );
-    	mPort = Integer.parseInt( ed.getText().toString() );
-    	
+    	int port = 5555;
+    	try {
+    	    port  = Integer.parseInt( ed.getText().toString() );
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
+
     	if (mVelService != null) {
-	    	Message msg = Message.obtain(null, VelocityEstimator.MSG_SET_PORT, mPort );
+	    	Message msg = Message.obtain(null, VelocityEstimator.MSG_SET_PORT, port );
 	    	try {
 	    		mVelService.send(msg);
 	    	} catch (RemoteException e) {
 	    		mVelService = null;
 	    	}
-    	}
-    	*/
+    	}    	
     }
     
     public void set_buffer_size(){    	
     	EditText ed = (EditText) findViewById(R.id.editBuffer );
-    	mBufferSize = Integer.parseInt( ed.getText().toString() );
+    	//mBufferSize = Integer.parseInt( ed.getText().toString() );
+    	int bufferSize = 60;
+    	try {
+    	    bufferSize = Integer.parseInt(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
     	
     	if (mVelService != null) {
-	    	Message msg = Message.obtain(null, VelocityEstimator.MSG_SET_BUFFER_SIZE, mBufferSize );
+	    	Message msg = Message.obtain(null, VelocityEstimator.MSG_SET_BUFFER_SIZE, bufferSize );
 	    	try {
 	    		mVelService.send(msg);
 	    	} catch (RemoteException e) {
@@ -546,17 +560,232 @@ public class GuesstimateVelocityBetter extends Activity {
 
     public void set_update_server(){    	
     	EditText ed = (EditText) findViewById(R.id.editUpdateServer );
-    	mUpdateServerTime = Integer.parseInt( ed.getText().toString() ) * 1000;
-    	if (mTransmitService != null) {
-	    	Message msg = Message.obtain(null, VelocityEstimator.MSG_SET_UPDATE_INTERVAL, mUpdateServerTime );
+    	int updateServerTime = 30000;
+    	try {
+    	    updateServerTime = Integer.parseInt(ed.getText().toString()) * 1000;
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+    	if (mVelService != null) {
+	    	Message msg = Message.obtain(null, VelocityEstimator.MSG_SET_PORT, updateServerTime );
+	    	try {
+	    		mVelService.send(msg);
+	    	} catch (RemoteException e) {
+	    		mVelService = null;
+	    	}
+    	}    	
+    }
+
+	public void send_estimate_settings(){
+    	RadioGroup rg = (RadioGroup) findViewById(R.id.radioGroupAcc);
+    	int selected = rg.getCheckedRadioButtonId();
+    	int sensorid = -1;
+    	switch ( selected ) {
+    		case R.id.radioAcc:
+    			sensorid = 0;
+    			break;
+    		case R.id.radioLinAcc:
+    			sensorid = 1;
+    			break;
+    	}
+
+    	rg = (RadioGroup) findViewById(R.id.radioGroupForward);
+    	selected = rg.getCheckedRadioButtonId();
+    	int forwardid = -1;
+    	switch ( selected ) {
+    		case R.id.radioFX:
+    			forwardid = 0;
+    			break;
+    		case R.id.radioFY:
+    			forwardid = 1;
+    			break;
+    		case R.id.radioFZ:
+    			forwardid = 2;
+    			break;
+    	}
+
+    	rg = (RadioGroup) findViewById(R.id.radioGroupGravity);
+    	selected = rg.getCheckedRadioButtonId();
+    	int gravityid = -1;
+    	switch ( selected ) {
+    		case R.id.radioGX:
+    			gravityid = 0;
+    			break;
+    		case R.id.radioGY:
+    			gravityid = 1;
+    			break;
+    		case R.id.radioGZ:
+    			gravityid = 2;
+    			break;
+    	}
+
+    	rg = (RadioGroup) findViewById(R.id.radioGroupSideways);
+    	selected = rg.getCheckedRadioButtonId();
+    	int sideid = -1;
+    	switch ( selected ) {
+    		case R.id.radioSX:
+    			sideid = 0;
+    			break;
+    		case R.id.radioSY:
+    			sideid = 1;
+    			break;
+    		case R.id.radioSZ:
+    			sideid = 2;
+    			break;
+    	}
+    	
+
+    	EditText ed = (EditText) findViewById(R.id.acceleration);
+    	float acc = 0.3f;
+    	
+    	try {
+    	    acc = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
+		ed = (EditText) findViewById(R.id.steady);
+    	float steady = 0.5f;
+    	
+    	try {
+    	    steady = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
+    	ed = (EditText) findViewById(R.id.decelThresS);
+    	float dec1 = 0.3f;
+    	try {
+    	    dec1 = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
+    	ed = (EditText) findViewById(R.id.decelThresM);
+    	float dec2 = 0.3f;
+    	try {
+    	    dec2 = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	}
+    	
+    	ed = (EditText) findViewById(R.id.stillThres1);
+    	float still1 = 0.3f;
+    	try {
+    	    still1 = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
+    	ed = (EditText) findViewById(R.id.stillThres2);
+    	float still2 = 0.3f;
+    	try {
+    	    still2 = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
+    	ed = (EditText) findViewById(R.id.editWindow);
+    	int window = 200;
+    	
+    	try {
+    	    window= Integer.parseInt(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
+    	ed = (EditText) findViewById(R.id.editUpdate);
+    	int updateTime = 10;
+    	
+    	try {
+    	    updateTime= Integer.parseInt(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+    	
+		if (mVelService != null) {
+    		Bundle b = new Bundle();
+	    	Message msg = Message.obtain(null, VelocityEstimator.MSG_ESTIMATE_SETTINGS );
+	    	b.putInt("sensor", sensorid );
+	    	b.putInt("forward", forwardid );
+	    	b.putInt("side", sideid );
+	    	b.putInt("gravity", gravityid );
+	    	b.putInt("window", window );
+	    	b.putInt("updateTime", updateTime );
+	    	b.putFloat("acc", acc );
+	    	b.putFloat("steady", steady );
+        	b.putFloat("dec1", dec1 );
+        	b.putFloat("dec2", dec2 );
+        	b.putFloat("still1", still1 );
+        	b.putFloat("still2", still2 );
+	    	msg.setData(b);
+
 	    	try {
 	    		mVelService.send(msg);
 	    	} catch (RemoteException e) {
 	    		mVelService = null;
 	    	}
     	}
-    }
+		
+	}
+	
+	public void send_server_settings(){
+    	EditText ed = (EditText) findViewById(R.id.editUpdateServer );
+    	int updateServerTime = 30000;
+    	try {
+    	    updateServerTime = Integer.parseInt(ed.getText().toString()) * 1000;
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	}
+    	
+    	ed = (EditText) findViewById(R.id.editHost);
+    	String host = ed.getText().toString();
 
+    	ed = (EditText) findViewById(R.id.editPort );
+    	int port = 5555;
+    	try {
+    	    port  = Integer.parseInt( ed.getText().toString() );
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
+    	ed = (EditText) findViewById(R.id.editClient );
+    	int client = 0;
+    	try {
+    	    client  = Integer.parseInt( ed.getText().toString() );
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
+    	ed = (EditText) findViewById(R.id.editBuffer );
+    	//mBufferSize = Integer.parseInt( ed.getText().toString() );
+    	int bufferSize = 60;
+    	try {
+    	    bufferSize = Integer.parseInt(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	}
+    	
+    	if (mVelService != null) {
+    		Bundle b = new Bundle();
+	    	Message msg = Message.obtain(null, VelocityEstimator.MSG_SERVER_SETTINGS );
+        	b.putString("host", host );
+        	b.putInt("port", port );
+        	b.putInt("client", client );
+        	b.putInt("bufferSize", bufferSize );
+        	b.putInt("updateServerTime", updateServerTime );
+	    	msg.setData(b);
+
+	    	try {
+	    		mVelService.send(msg);
+	    	} catch (RemoteException e) {
+	    		mVelService = null;
+	    	}
+    	}
+		
+	}
+
+    
     private ServiceConnection mVelServiceConnection = new ServiceConnection()
     {
     	public void onServiceConnected(ComponentName class_name, IBinder service) {
@@ -566,6 +795,7 @@ public class GuesstimateVelocityBetter extends Activity {
     			return;
     		}
     		
+    		/*
     		set_sensor();
     		set_window();
     		set_update_time();
@@ -577,12 +807,16 @@ public class GuesstimateVelocityBetter extends Activity {
     		set_threshold_steady();
     		set_threshold_still();
 
-
     		// uploader
     		set_ip();
     		set_port();
     		set_buffer_size();
     		set_update_server();
+			*/
+    		
+    		send_estimate_settings();
+    		send_server_settings();
+
     		
     		/*
     		setupBuffer();
@@ -843,3 +1077,4 @@ public class GuesstimateVelocityBetter extends Activity {
     }
     */
 }
+

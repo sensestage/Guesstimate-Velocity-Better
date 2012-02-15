@@ -3,6 +3,8 @@ package com.steim.nescivi.android.gvb;
 import android.app.Service;
 
 //import android.app.Activity;
+import android.os.AsyncTask;
+//import android.os.Thread;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
@@ -22,10 +24,15 @@ import android.widget.Toast;
 
 import java.util.Timer;
 import java.util.TimerTask;
+import java.net.Socket;
+import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.IOException;
 
-import com.steim.nescivi.android.gvb.VelocityTransmitter.IncomingHandler;
-
-
+//import com.steim.nescivi.android.gvb.VelocityTransmitter.IncomingHandler;
 
 public class VelocityEstimator extends Service {
 
@@ -48,6 +55,8 @@ public class VelocityEstimator extends Service {
     static final int MSG_SACC = 11;
     static final int MSG_GACC = 12;
     static final int MSG_SPEED = 13;
+    
+    static final int MSG_SERVER_UPDATE_MSG = 14;
 
 //    static final int MSG_REGISTER_VS_SRV = 5;
 //    static final int MSG_UNREGISTER_VS_SRV = 6;
@@ -65,20 +74,20 @@ public class VelocityEstimator extends Service {
     static final int MSG_SET_THRESH_DECEL = 32;
     static final int MSG_SET_THRESH_STILL = 33;
     
+    static final int MSG_ESTIMATE_SETTINGS = 39;
+    static final int MSG_SERVER_SETTINGS = 40;
+    
     static final int MSG_SET_IP = 50;
     static final int MSG_SET_PORT = 51;
     static final int MSG_SET_BUFFER_SIZE = 52;
     static final int MSG_SET_UPDATE_INTERVAL = 53; 
 
     
-//	private Thread myThread;
 	private Timer timer = new Timer();
-	
-	//private boolean mRunning;
-	
-	// this could also be a setting!
-	private static final int THREAD_UPDATE_VELOCITY_DELAY = 10;
-		
+
+	private Thread myThread;
+	private boolean mRunning;
+			
 	private SensorListener mListener;
 	private CircularFloatArrayBuffer mBuffer;
 	
@@ -115,6 +124,7 @@ public class VelocityEstimator extends Service {
 
 	private String mHost;
 	private int mPort;
+	private int mClientID;
 	private int mBufferSize = 60;
 	private int mUpdateServerTime = 30000;
 	private CircularStringArrayBuffer mUploadBuffer;
@@ -134,18 +144,39 @@ public class VelocityEstimator extends Service {
     	{
     		switch(msg.what)
     		{
-    			case MSG_REGISTER_GUI_CLIENT:
+    		case MSG_ESTIMATE_SETTINGS:
+    			set_sensor( msg.getData().getInt("sensor") );
+    			set_forward_axis( msg.getData().getInt("forward") );
+				set_sideways_axis( msg.getData().getInt("side"));
+				set_gravity_axis( msg.getData().getInt("gravity") );
+				set_window( msg.getData().getInt("window") );
+				set_update_time(msg.getData().getInt("updateTime"));
+				set_threshold_acceleration( msg.getData().getFloat("acc") );
+				set_threshold_steady( msg.getData().getFloat("steady") );
+				set_threshold_deceleration( msg.getData().getFloat("dec1"),msg.getData().getFloat("dec2") );
+				set_threshold_still( msg.getData().getFloat("still1"), msg.getData().getFloat("still2") );
+    			break;
+    		case MSG_SERVER_SETTINGS:
+				set_ip( msg.getData().getString("host") );
+				set_port( msg.getData().getInt("port") );
+				set_client( msg.getData().getInt("client") );
+				set_buffer_size( msg.getData().getInt("bufferSize") );
+				set_update_interval( msg.getData().getInt("updateServerTime"));
+    			break;
+   			case MSG_REGISTER_GUI_CLIENT:
     				mGuiClient = msg.replyTo;
     				break;
-    			case MSG_UNREGISTER_GUI_CLIENT:
+   			case MSG_UNREGISTER_GUI_CLIENT:
     				mGuiClient = null;
     				break;
+    				/*
     			case MSG_REGISTER_TX_CLIENT:
     				mTransmitService = msg.replyTo;
     				break;
     			case MSG_UNREGISTER_TX_CLIENT:
     				mTransmitService = null;
     				break;
+    				*/
     			case MSG_SET_SENSOR:
     				set_sensor(msg.arg1);
     				break;
@@ -210,7 +241,7 @@ public class VelocityEstimator extends Service {
         
     	Log.d("VelocityEstimator", "onCreate");
     	mContext = getApplicationContext();
-    //	mRunning = false;
+    	mRunning = false;
 
 
 	this.mLastTime = System.currentTimeMillis();
@@ -218,7 +249,8 @@ public class VelocityEstimator extends Service {
 	// Prepare members
 	mListener = new SensorListener(this);		
 	mBuffer = new CircularFloatArrayBuffer( this.mWindowSize );
-    	this.mUpdateTime = 30000;
+    this.mUpdateTime = 10;
+    this.mUpdateServerTime = 30000;
 	this.mUploadBuffer = new CircularStringArrayBuffer( this.mBufferSize );
 	
 	
@@ -229,10 +261,7 @@ public class VelocityEstimator extends Service {
     public int onStartCommand(Intent intent, int flags, int startId)
     {            	
     	Log.d("VelocityEstimator", "onStartCommand");
-		// start chart periodic update thread
-    	//mRunning = true;
-//		myThread = new Thread();
-//		myThread.start();
+		
 		mListener.startListening( this.mType, 0, this.mForward, this.mSideways, this.mGravity );
 		mCalcTimerTask = new TimerTask() {
 		  public void run() {
@@ -241,13 +270,14 @@ public class VelocityEstimator extends Service {
 		};
 		mUploadTimerTask = new TimerTask() {
 		  public void run() {
-    			uploadData();
+    			//uploadData();
+    			uploadDataTCP();
 		  }
 		};
 		TimerTask msgTimerTask = new TimerTask() {
     		public void run() {
 			// add data to circular string buffer:
-			add_data_to_buffer();
+    			add_data_to_buffer();
 			// send messages to UI:
     			send_speed_msg();
     			send_forward_accel_msg();
@@ -255,10 +285,15 @@ public class VelocityEstimator extends Service {
     			send_gravity_accel_msg();
     		}
 		};
-    	timer.scheduleAtFixedRate( mCalcTimerTask, 0, THREAD_UPDATE_VELOCITY_DELAY );
+    	timer.scheduleAtFixedRate( mCalcTimerTask, 0, mUpdateTime );
     	timer.scheduleAtFixedRate( msgTimerTask, 0, 1000 );
-    	timer.scheduleAtFixedRate( mSendDataTimerTask, 0, mUpdateServerTime );
-		//this.runThread();
+    	timer.scheduleAtFixedRate( mUploadTimerTask, 0, mUpdateServerTime );
+
+		// start chart periodic update thread
+    	//mRunning = true;
+		//myThread = new Thread();
+		//myThread.start();
+    	//this.runUploaderThread();
         
     	Toast.makeText(mContext, "VelocityEstimator starting", Toast.LENGTH_SHORT).show();
     	
@@ -276,11 +311,7 @@ public class VelocityEstimator extends Service {
     	if (timer != null){
 	    mCalcTimerTask.cancel();
             timer.cancel();
-        }
-    	
-//    	mRunning = false;
-//    	unregister_GPS();
-//    	mSensorManager.unregisterListener(this); 
+        }    	
     }
     
     @Override
@@ -304,22 +335,23 @@ public class VelocityEstimator extends Service {
     	String [] currentVals = new String[2];
     	Date now = new Date();
     	currentVals[0] = formatDate( now );
-    	currentVals[1] = String.format("%.2f", mSpeed * 0.36f );
+    	currentVals[1] = String.format("%.2f", mSpeed * 3.6f );
     	mUploadBuffer.add( currentVals );
     }
 
+    /*
     public void uploadData(){
-	Toast.makeText(GuesstimateVelocityBetter.this, String.format("Velocity: %.2f", mSpeed ), Toast.LENGTH_SHORT).show();    	
-    	//VelocityBufferTransmitter uploader = new VelocityBufferTransmitter();
-    	//uploader.execute( new String[] { mHost, String.format("%i", mPort ) } );
+    	send_server_update_msg();
+    //	Toast.makeText(mContext, String.format("Velocity: %.2f", mSpeed ), Toast.LENGTH_SHORT).show();    	
+    //	VelocityBufferTransmitter uploader = new VelocityBufferTransmitter();
+    //	uploader.execute( new String[] { mHost, String.format("%i", mPort ) } );
     }
 
     private class VelocityBufferTransmitter extends AsyncTask< String, Void, String > {
     	@Override
     	protected String doInBackground(String... urls) {
     		String response = "";
-    		try {
-    			
+    		try {    			
     	        Socket s = new Socket( urls[0], Integer.parseInt( urls[1] ) );
     	       
     	        //outgoing stream redirect to socket
@@ -349,6 +381,7 @@ public class VelocityEstimator extends Service {
 	//	tv1.setText( result );
     	} 
     }
+    */
     
     private void set_ip( String newhost ){
     	this.mHost = newhost;
@@ -357,20 +390,26 @@ public class VelocityEstimator extends Service {
     private void set_port( int newport ){
     	this.mPort = newport;
     }
+
+    private void set_client( int newclient ){
+    	this.mClientID = newclient;
+    }
     
     private void set_buffer_size( int windowsize ){
     	if ( this.mBufferSize != windowsize ){
-        	mBuffer = null;
-        	mBuffer = new CircularStringArrayBuffer( windowsize );
+        	mUploadBuffer = null;
+        	mUploadBuffer = new CircularStringArrayBuffer( windowsize );
     	}
     	this.mBufferSize = windowsize;
     }
 
     private void set_update_interval( int updtime ){
+    	/*
     	if ( this.mUpdateServerTime != updtime ){
-    		mSendDataTimerTask.cancel();
-    		timer.scheduleAtFixedRate( mSendDataTimerTask, 0, updtime );
+    		mUploadTimerTask.cancel();
+    		timer.scheduleAtFixedRate( mUploadTimerTask, 0, updtime );
     	}
+    	*/
     	this.mUpdateServerTime = updtime;
     }
 
@@ -386,10 +425,12 @@ public class VelocityEstimator extends Service {
     }
 
     private void set_update_time( int updtime ){
+    	/*
     	if ( this.mUpdateTime != updtime ){
     		mCalcTimerTask.cancel();
     		timer.scheduleAtFixedRate( mCalcTimerTask, 0, updtime );
     	}
+    	*/
     	this.mUpdateTime = updtime;
     }
 
@@ -418,22 +459,43 @@ public class VelocityEstimator extends Service {
     	}
     }
     
-    private void set_threshold_acceleration( int newth ){
-    	threshold_acceleration = (float) newth / 100.0f;
+    private void set_threshold_acceleration( float newth ){
+    	threshold_acceleration = newth;
     }
 
-    private void set_threshold_steady( int newth ){
-    	threshold_steady = (float) newth / 100.0f;
+    private void set_threshold_steady( float newth ){
+    	threshold_steady = newth;
     }
     
-    private void set_threshold_deceleration( int newth1, int newth2 ){
-    	threshold_decel_std = (float) newth1 / 100.0f;
-    	threshold_decel_mean = (float) newth2 / 100.0f;
+    private void set_threshold_deceleration( float newth1, float newth2 ){
+    	threshold_decel_std = newth1;
+    	threshold_decel_mean = newth2;
     }
 
-    private void set_threshold_still( int newth1, int newth2 ){
-    	threshold_still_side = (float) newth1 / 100.0f;
-    	threshold_still_forward = (float) newth2 / 100.0f;
+    private void set_threshold_still( float newth1, float newth2 ){
+    	threshold_still_side = newth1;
+    	threshold_still_forward = newth2;
+    }
+
+    private void send_server_update_msg()
+    {
+	Message msg = Message.obtain(null, MSG_SERVER_UPDATE_MSG, (int)(this.mSpeed * 10.f) );
+
+	if (mTransmitService != null){
+    		try	{
+    			mTransmitService.send(msg);
+    		} catch (RemoteException e)	{
+    			mTransmitService = null;
+    		}
+	}
+
+    	if (mGuiClient != null)	{
+	  try {
+    			mGuiClient.send(msg);
+    		} catch (RemoteException e) {
+    			mGuiClient = null;
+    		}
+	}    	
     }
 
     private void send_speed_msg()
@@ -587,17 +649,75 @@ public class VelocityEstimator extends Service {
 		//send_speed_msg();
 	}
 	
-	/*
+    public void uploadDataTCP(){
+		send_server_update_msg();		
+		if ( mHost != null && mPort != 0 ){
+			try {			
+				Socket s = new Socket( mHost, mPort );
+	       
+	        //	outgoing stream redirect to socket
+				OutputStream out = s.getOutputStream();
+	       
+				PrintWriter output = new PrintWriter(out);
+	        // print the circular buffer
+				
+				String[][] bufContents = mUploadBuffer.getContents();
+				output.println( mClientID ); // FIXME - should be setting - client ID
+				for (String[] item: bufContents) {		
+					output.print( item[0]);
+					output.print( " " );
+					output.println( item[1]);	
+				}
+				output.flush();
+				output.close();
+
+	        //	Close connection
+				s.close();
+	           	       
+			} catch (UnknownHostException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+       	}
+    }
+	
 	//@Override
-	public void runThread() {
-		mListener.startListening( this.mType, 0, this.mForward, this.mSideways, this.mGravity );
+	public void runUploaderThread() {
 		while (myThread != null && mRunning ) {
-			updateVelocityMeasurement();
+			send_server_update_msg();
+			/*
+			if ( mHost != null && mPort != 0 ){
+				try {
+    			
+					Socket s = new Socket( mHost, mPort );
+    	       
+    	        //	outgoing stream redirect to socket
+					OutputStream out = s.getOutputStream();
+    	       
+					PrintWriter output = new PrintWriter(out);
+    	        // print the circular buffer
+					output.println("Hello Android!");
+    	        
+    	        //	Close connection
+					s.close();
+    	           	       
+				} catch (UnknownHostException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+			}
+			*/
 			try {
-				Thread.sleep(THREAD_UPDATE_VELOCITY_DELAY);
+				Thread.sleep( mUpdateServerTime );
 			} catch (InterruptedException e) { }
 		}
-		mListener.stopListening();
 	}
-	*/
+	
 }
