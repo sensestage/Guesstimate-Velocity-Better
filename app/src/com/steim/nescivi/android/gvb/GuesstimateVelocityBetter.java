@@ -77,7 +77,31 @@ public class GuesstimateVelocityBetter extends Activity {
     		{
     			case VelocityEstimator.MSG_SERVER_UPDATE_MSG:
     				tv = (TextView) findViewById(R.id.TransmitterStatusTextView);
-    				tv.setText(String.format("%.1f m/s", msg.arg1 / 10.f ) );
+    				tv.setText( msg.getData().getString("status") );
+    			//	tv.setText(String.format("%.1f m/s", msg.arg1 / 10.f ) );
+    				break;
+    			case VelocityEstimator.MSG_GUI_UPDATE_MSG:
+    				tv = (TextView) findViewById(R.id.VelocityStatusTextView);
+    				tv.setText(String.format("%.1f m/s", msg.getData().getFloat( "speed" ) ) );
+    				tv = (TextView) findViewById(R.id.VelocityStatusTextView2);
+    				tv.setText(String.format("%.1f km/h", msg.getData().getFloat( "speed" ) * 3.6f ) );
+    				tv = (TextView) findViewById(R.id.MotionStatusTextView);
+    				tv.setText( GuesstimateVelocityBetter.SpeedStates[ msg.getData().getInt( "motion" ) ] );
+    				tv = (TextView) findViewById(R.id.FXMeanTextView);
+    				tv.setText(String.format("%.2f m/s^2", msg.getData().getFloat( "facc_mean" ) ) );
+    				tv = (TextView) findViewById(R.id.FXStdDevTextView);
+    				tv.setText(String.format("%.2f m/s^2", msg.getData().getFloat( "facc_std" ) ) );
+    				tv = (TextView) findViewById(R.id.SXMeanTextView);
+    				tv.setText(String.format("%.2f m/s^2", msg.getData().getFloat( "sacc_mean" ) ) );
+    				tv = (TextView) findViewById(R.id.SXStdDevTextView);
+    				tv.setText(String.format("%.2f m/s^2", msg.getData().getFloat( "sacc_std" ) ) );
+    				tv = (TextView) findViewById(R.id.GXMeanTextView);
+    				tv.setText(String.format("%.2f m/s^2", msg.getData().getFloat( "gacc_mean" ) ) );
+    				tv = (TextView) findViewById(R.id.GXStdDevTextView);
+    				tv.setText(String.format("%.2f m/s^2", msg.getData().getFloat( "gacc_std" ) ) );
+    				break;
+    				
+    	/*			
     			case VelocityEstimator.MSG_SPEED:
     				// add the data to the buffer:
     				//addDataToBuffer( msg.arg1 );
@@ -107,6 +131,7 @@ public class GuesstimateVelocityBetter extends Activity {
     				tv = (TextView) findViewById(R.id.GXStdDevTextView);
     				tv.setText(String.format("%.2f m/s^2", msg.arg2 / 100.f ) );
     				break;
+    	*/
     			default:
     				super.handleMessage(msg);
     		}
@@ -184,6 +209,15 @@ public class GuesstimateVelocityBetter extends Activity {
     }
     */
 
+	/*
+	if (interval != mAccel_filter_interval)	{
+    	mPrefsEdit.putFloat("Accel_filter_interval", interval);
+    	mPrefsEdit.apply();
+	} 
+	*/   	
+
+    
+    /*
     public void set_sensor()
     {   
     	RadioGroup rg = (RadioGroup) findViewById(R.id.radioGroupAcc);
@@ -207,12 +241,6 @@ public class GuesstimateVelocityBetter extends Activity {
 	    	}
     	}
     	
-    	/*
-    	if (interval != mAccel_filter_interval)	{
-	    	mPrefsEdit.putFloat("Accel_filter_interval", interval);
-	    	mPrefsEdit.apply();
-    	} 
-    	*/   	
     } 
 
     public void set_forward_axis()
@@ -241,12 +269,6 @@ public class GuesstimateVelocityBetter extends Activity {
 	    	}
     	}
     	
-    	/*
-    	if (interval != mAccel_filter_interval)	{
-	    	mPrefsEdit.putFloat("Accel_filter_interval", interval);
-	    	mPrefsEdit.apply();
-    	} 
-    	*/   	
     } 
 
     public void set_sideways_axis()
@@ -275,12 +297,6 @@ public class GuesstimateVelocityBetter extends Activity {
 	    	}
     	}
     	
-    	/*
-    	if (interval != mAccel_filter_interval)	{
-	    	mPrefsEdit.putFloat("Accel_filter_interval", interval);
-	    	mPrefsEdit.apply();
-    	} 
-    	*/   	
     } 
 
     public void set_gravity_axis()
@@ -309,12 +325,6 @@ public class GuesstimateVelocityBetter extends Activity {
 	    	}
     	}
     	
-    	/*
-    	if (interval != mAccel_filter_interval)	{
-	    	mPrefsEdit.putFloat("Accel_filter_interval", interval);
-	    	mPrefsEdit.apply();
-    	} 
-    	*/   	
     }
     
     public void set_window()
@@ -337,12 +347,6 @@ public class GuesstimateVelocityBetter extends Activity {
 	    	}
     	}
     	
-    	/*
-    	if (interval != mAccel_filter_interval)	{
-	    	mPrefsEdit.putFloat("Accel_filter_interval", interval);
-	    	mPrefsEdit.apply();
-    	} 
-    	*/   	
     } 
 
     public void set_update_time()
@@ -365,12 +369,6 @@ public class GuesstimateVelocityBetter extends Activity {
 	    	}
     	}
     	
-    	/*
-    	if (interval != mAccel_filter_interval)	{
-	    	mPrefsEdit.putFloat("Accel_filter_interval", interval);
-	    	mPrefsEdit.apply();
-    	} 
-    	*/   	
     } 
 
     public void set_threshold_acceleration()
@@ -393,12 +391,6 @@ public class GuesstimateVelocityBetter extends Activity {
 	    	}
     	}
     	
-    	/*
-    	if (interval != mAccel_filter_interval)	{
-	    	mPrefsEdit.putFloat("Accel_filter_interval", interval);
-	    	mPrefsEdit.apply();
-    	} 
-    	*/   	
     } 
 
     public void set_threshold_steady()
@@ -421,12 +413,6 @@ public class GuesstimateVelocityBetter extends Activity {
 	    	}
     	}
     	
-    	/*
-    	if (interval != mAccel_filter_interval)	{
-	    	mPrefsEdit.putFloat("Accel_filter_interval", interval);
-	    	mPrefsEdit.apply();
-    	} 
-    	*/   	
     } 
     
     public void set_threshold_deceleration()
@@ -456,12 +442,6 @@ public class GuesstimateVelocityBetter extends Activity {
 	    	}
     	}
     	
-    	/*
-    	if (interval != mAccel_filter_interval)	{
-	    	mPrefsEdit.putFloat("Accel_filter_interval", interval);
-	    	mPrefsEdit.apply();
-    	} 
-    	*/   	
     } 
 
 
@@ -492,12 +472,6 @@ public class GuesstimateVelocityBetter extends Activity {
 	    	}
     	}
     	
-    	/*
-    	if (interval != mAccel_filter_interval)	{
-	    	mPrefsEdit.putFloat("Accel_filter_interval", interval);
-	    	mPrefsEdit.apply();
-    	} 
-    	*/   	
     } 
 
     public void set_ip(){    	
@@ -575,7 +549,7 @@ public class GuesstimateVelocityBetter extends Activity {
 	    	}
     	}    	
     }
-
+*/
 	public void send_estimate_settings(){
     	RadioGroup rg = (RadioGroup) findViewById(R.id.radioGroupAcc);
     	int selected = rg.getCheckedRadioButtonId();
@@ -685,6 +659,14 @@ public class GuesstimateVelocityBetter extends Activity {
     	   System.out.println("Could not parse " + nfe);
     	} 
 
+    	ed = (EditText) findViewById(R.id.stillThresTime);
+    	float stilltime = 3.0f;
+    	try {
+    	    stilltime = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
     	ed = (EditText) findViewById(R.id.editWindow);
     	int window = 200;
     	
@@ -718,6 +700,7 @@ public class GuesstimateVelocityBetter extends Activity {
         	b.putFloat("dec2", dec2 );
         	b.putFloat("still1", still1 );
         	b.putFloat("still2", still2 );
+        	b.putFloat("stilltime", stilltime );
 	    	msg.setData(b);
 
 	    	try {
