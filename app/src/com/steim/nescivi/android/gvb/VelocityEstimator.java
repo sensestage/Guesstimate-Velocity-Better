@@ -668,15 +668,17 @@ public class VelocityEstimator extends Service {
 				break;	
 			case 3: // decelerating
 			default:
-				// could add a time window before being still
-				if ( mCurrentStats[1][1] < threshold_still_side && mCurrentStats[1][0] < threshold_still_forward ){
-					this.mStillTime += (float) mDeltaTime * 0.001;
-					if ( mStillTime > threshold_still_time ){
-						this.mState = 0;
-					}
-				}
 				break;	
 			}
+		if ( this.mState > 0 ){
+			// 	could add a time window before being still
+			if ( mCurrentStats[1][1] < threshold_still_side && mCurrentStats[1][0] < threshold_still_forward ){
+				this.mStillTime += (float) mDeltaTime * 0.001;
+				if ( mStillTime > threshold_still_time ){
+					this.mState = 0;
+				}
+			}
+		}
 				
 		// calculate forward speed
 		switch (this.mState){

@@ -740,7 +740,7 @@ public class GuesstimateVelocityBetter extends Activity {
         	b.putFloat("still2", still2 );
         	b.putFloat("stilltime", stilltime );
         	b.putFloat("offsetma", offsetma );
-        	b.putFloat("signForward", signForward );
+        	b.putInt("signForward", signForward );
 	    	msg.setData(b);
 
 	    	try {
