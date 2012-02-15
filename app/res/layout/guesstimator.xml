@@ -34,7 +34,13 @@
 	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/GXMeanTextView" android:text="0.0 m/s^2"></TextView>
 	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/GXStdDevTextView" android:text="0.0 m/s^2"></TextView>
 	</TableRow>
-      </TableLayout>
+	<TableRow>
+	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/OffsetStatusLabelTextView" android:text="Offset/still"></TextView>
+	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/OffsetTextView" android:text="0.0 m/s"></TextView>
+	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/StillTextView" android:text="0.0"></TextView>
+	 </TableRow>
+		
+	</TableLayout>
     </LinearLayout>
     
     <ScrollView android:id="@+id/ScrollView01" android:layout_width="fill_parent" android:layout_height="wrap_content">
@@ -68,7 +74,12 @@
 	    <RadioButton android:id="@+id/radioFY" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" android:text="Y" />
 	    <RadioButton android:id="@+id/radioFZ" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Z" />
 	  </RadioGroup>
-	</LinearLayout>
+	        <CheckBox
+            android:id="@+id/signForward"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="invert" />					      
+	  	</LinearLayout>
 	<LinearLayout android:id="@+id/LinearLayout08" android:layout_width="fill_parent" android:layout_height="wrap_content" android:orientation="horizontal" >
 	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/SidewaysAxisLabelTextView" android:text="Sideways axis"></TextView>
 	  <RadioGroup android:id="@+id/radioGroupSideways" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
@@ -123,8 +134,11 @@
 	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/Still1LabelTextView" android:text="Still time"></TextView>
 	    <EditText android:id="@+id/stillThresTime" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="3.0">
 	    </EditText>
-	</TableRow>
-	  </TableLayout>
+	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/Still1LabelTextView" android:text="Offset MA"></TextView>
+	    <EditText android:id="@+id/offsetMA" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.95">
+	    </EditText>
+	    	</TableRow>
+	  	  </TableLayout>
 
 	<TextView android:textAppearance="?android:attr/textAppearanceLarge" android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/SettingLabelTextView" android:text="SERVER" android:gravity="center_vertical|center_horizontal"></TextView>
 	<TableLayout android:id="@+id/TableLayout2" android:layout_width="fill_parent" android:layout_height="wrap_content" android:stretchColumns="1">
@@ -146,7 +160,16 @@
 	      <EditText android:id="@+id/editUpdateServer" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="30" ></EditText>
 	  </TableRow>
    	  </TableLayout>
-   	  
+
+	<TextView android:textAppearance="?android:attr/textAppearanceLarge" android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/LocalLogLabelTextView" android:text="LOGGING" android:gravity="center_vertical|center_horizontal"></TextView>
+
+	        <CheckBox
+            android:id="@+id/localLog"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="create a log on phone" />
+				
+		  
     </LinearLayout>
   </ScrollView>
 
