@@ -92,15 +92,15 @@ public class GuesstimateVelocityBetter extends Activity {
     				tv = (TextView) findViewById(R.id.FXMeanTextView);
     				tv.setText(String.format("%.2f m/s^2", msg.getData().getFloat( "facc_mean" ) ) );
     				tv = (TextView) findViewById(R.id.FXStdDevTextView);
-    				tv.setText(String.format("%.2f m/s^2", msg.getData().getFloat( "facc_std" ) ) );
+    				tv.setText(String.format("%.5f", msg.getData().getFloat( "facc_std" ) ) );
     				tv = (TextView) findViewById(R.id.SXMeanTextView);
     				tv.setText(String.format("%.2f m/s^2", msg.getData().getFloat( "sacc_mean" ) ) );
     				tv = (TextView) findViewById(R.id.SXStdDevTextView);
-    				tv.setText(String.format("%.2f m/s^2", msg.getData().getFloat( "sacc_std" ) ) );
+    				tv.setText(String.format("%.5f", msg.getData().getFloat( "sacc_std" ) ) );
     				tv = (TextView) findViewById(R.id.GXMeanTextView);
     				tv.setText(String.format("%.2f m/s^2", msg.getData().getFloat( "gacc_mean" ) ) );
     				tv = (TextView) findViewById(R.id.GXStdDevTextView);
-    				tv.setText(String.format("%.2f m/s^2", msg.getData().getFloat( "gacc_std" ) ) );
+    				tv.setText(String.format("%.5f", msg.getData().getFloat( "gacc_std" ) ) );
     				tv = (TextView) findViewById(R.id.OffsetTextView);
     				tv.setText(String.format("%.2f m/s", msg.getData().getFloat( "offset" ) ) );
     			//	tv = (TextView) findViewById(R.id.SignTextView);

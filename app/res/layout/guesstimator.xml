@@ -105,7 +105,7 @@
 	      <EditText android:id="@+id/editUpdate" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="10" ></EditText>
 	      	  </TableRow>
 	  <TableRow>
-	    <TextView android:textAppearance="?android:attr/textAppearanceLarge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/ThresholdLabelTextView" android:text="Thresholds"></TextView>
+	    <TextView android:textAppearance="?android:attr/textAppearanceLarge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/ThresholdLabelTextView" android:text="Thresholds" android:layout_span="2"></TextView>
 	  </TableRow>            
 	  <TableRow>
 	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/AccelLabelTextView" android:text="Acceleration"></TextView>
@@ -115,18 +115,18 @@
 	    <EditText android:id="@+id/steady" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.2"></EditText>
 	  </TableRow>
 	  <TableRow>
-	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/Decel1LabelTextView" android:text="Deceleration 1"></TextView>
+	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/Decel1LabelTextView" android:text="Decel std"></TextView>
 	    <EditText android:id="@+id/decelThresS" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.25">
 	    </EditText>
-	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/Decel2LabelTextView" android:text="Deceleration 2"></TextView>
+	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/Decel2LabelTextView" android:text="Decel mean"></TextView>
 	    <EditText android:id="@+id/decelThresM" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="-0.5">
 	    </EditText>
 	  </TableRow>
 	  <TableRow>
-	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/Still1LabelTextView" android:text="Still 1"></TextView>
+	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/Still1LabelTextView" android:text="Still sid"></TextView>
 	    <EditText android:id="@+id/stillThres1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.1">
 	    </EditText>
-	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/Still2LabelTextView" android:text="Still 2"></TextView>
+	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/Still2LabelTextView" android:text="Still for"></TextView>
 	  <EditText android:id="@+id/stillThres2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.1">
 	  </EditText>
 	</TableRow>
