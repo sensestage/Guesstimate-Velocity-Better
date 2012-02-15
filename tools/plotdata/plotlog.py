@@ -108,9 +108,10 @@ def rolling_window(a, window):
     return numpy.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
     
     
-def motion_state_machine( meanF, stdF, meanS, stdS ):
+def motion_state_machine( meanF, stdF, meanS, stdS, deltaT ):
   # forward motion: meanF, stdF ; sideways motion: meanS, stdS ; mean and standard deviation
   global motion_state
+  global still_count
   global motion_state_index
   if motion_state == 'still':
     if stdF > 0.3:
@@ -130,8 +131,11 @@ def motion_state_machine( meanF, stdF, meanS, stdS ):
       #motion_state_index = 0.
   else:
     if stdS < 0.1 and stdF < 0.1:
-      motion_state = 'still'
-      motion_state_index = 0.
+      still_count = still_count + deltaT * 0.001
+      if still_count > 3.:
+	still_count = 0.
+	motion_state = 'still'
+	motion_state_index = 0.
       
 def calculate_speed( meanF, deltaT ):
   global speed
@@ -148,6 +152,8 @@ def openFile( filename ):
 	global motion_state
 	global motion_state_index
 	global speed
+	global still_count
+	still_count = 0.
 	speed = 0.
 	motion_state_index = 0.
 	motion_state = 'still'
@@ -221,7 +227,7 @@ def openFile( filename ):
 	motions = []
 	for i in range( 1, meanDT.size ):
 	  #print i
-	  motion_state_machine( means[1][i], stds[1][i], means[0][i], stds[0][i] )
+	  motion_state_machine( means[1][i], stds[1][i], means[0][i], stds[0][i], meanDT[i] )
 	  calculate_speed( means[1][i], meanDT[i] )
 	  #calculate_speed( means[1][i], deltatimes[i] )
 	  speeds.append( speed )
