@@ -1,5 +1,7 @@
 package com.steim.nescivi.android.gvb;
 
+import java.lang.Math;
+
 public class CircularFloatArrayBuffer {
 	private int mSize, mNewestElement;
 	private float mBuffer[][];
@@ -79,7 +81,7 @@ public class CircularFloatArrayBuffer {
 	    	}
 	    }
 	    for ( int axis = 0; axis < 3; axis++ ){
-	    	stats[1][axis] = M2[axis]/(n - 1);
+	    	stats[1][axis] = (float) Math.sqrt( M2[axis]/(n - 1) );
 	    }
 	    //return stats;
 	}
