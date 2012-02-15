@@ -23,11 +23,12 @@ import android.view.View;
 //import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.RadioGroup;
+import android.widget.RadioButton;
 import android.widget.EditText;
-//import android.widget.Spinner;
+import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.Toast;
-//import android.content.SharedPreferences;
+import android.content.SharedPreferences;
 
 /*
 import java.util.Timer;
@@ -58,8 +59,9 @@ public class GuesstimateVelocityBetter extends Activity {
 //	private Timer uploadTimer;
 //	private TimerTask mSendDataTimerTask;
 	
-  //  private SharedPreferences mPrefs;
   //  private SharedPreferences.Editor mPrefsEdit;
+
+    private SharedPreferences mPrefs;
 
 	
 	public static final String [] SpeedStates = {
@@ -99,6 +101,27 @@ public class GuesstimateVelocityBetter extends Activity {
     				tv.setText(String.format("%.2f m/s^2", msg.getData().getFloat( "gacc_mean" ) ) );
     				tv = (TextView) findViewById(R.id.GXStdDevTextView);
     				tv.setText(String.format("%.2f m/s^2", msg.getData().getFloat( "gacc_std" ) ) );
+    				tv = (TextView) findViewById(R.id.OffsetTextView);
+    				tv.setText(String.format("%.2f m/s", msg.getData().getFloat( "offset" ) ) );
+    			//	tv = (TextView) findViewById(R.id.SignTextView);
+    			//	tv.setText(String.format("%.0f ", msg.getData().getFloat( "sign" ) ) );
+    				tv = (TextView) findViewById(R.id.StillTextView);
+    				tv.setText(String.format("%.0f ", msg.getData().getFloat( "stilltime" ) ) );
+    				float [] logdata = { 
+        					(float) msg.getData().getInt( "motion" ),
+        					msg.getData().getFloat( "speed" ), 
+        					msg.getData().getFloat( "speed" ) * 3.6f,
+        					msg.getData().getFloat( "facc_mean" ),
+        					msg.getData().getFloat( "facc_std" ),
+        					msg.getData().getFloat( "xacc_mean" ),
+        					msg.getData().getFloat( "sacc_std" ),
+        					msg.getData().getFloat( "gacc_mean" ),
+        					msg.getData().getFloat( "gacc_std" ),
+        					msg.getData().getFloat( "offset" ),
+        				//	msg.getData().getFloat( "sign" ),
+        					msg.getData().getFloat( "stilltime" )
+        				};
+    				writeLogData( logdata );
     				break;
     				
     	/*			
@@ -610,6 +633,7 @@ public class GuesstimateVelocityBetter extends Activity {
     	
 
     	EditText ed = (EditText) findViewById(R.id.acceleration);
+    	
     	float acc = 0.3f;
     	
     	try {
@@ -667,6 +691,14 @@ public class GuesstimateVelocityBetter extends Activity {
     	   System.out.println("Could not parse " + nfe);
     	} 
 
+    	ed = (EditText) findViewById(R.id.offsetMA);
+    	float offsetma = 0.95f;
+    	try {
+    	    offsetma = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
     	ed = (EditText) findViewById(R.id.editWindow);
     	int window = 200;
     	
@@ -684,6 +716,12 @@ public class GuesstimateVelocityBetter extends Activity {
     	} catch(NumberFormatException nfe) {
     	   System.out.println("Could not parse " + nfe);
     	} 
+
+    	CheckBox cb = (CheckBox) findViewById(R.id.signForward);
+    	int signForward = 1;
+    	if (cb.isChecked() ){
+    		signForward = -1;
+    	}
     	
 		if (mVelService != null) {
     		Bundle b = new Bundle();
@@ -701,6 +739,8 @@ public class GuesstimateVelocityBetter extends Activity {
         	b.putFloat("still1", still1 );
         	b.putFloat("still2", still2 );
         	b.putFloat("stilltime", stilltime );
+        	b.putFloat("offsetma", offsetma );
+        	b.putFloat("signForward", signForward );
 	    	msg.setData(b);
 
 	    	try {
@@ -857,22 +897,359 @@ public class GuesstimateVelocityBetter extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.guesstimator);
         
-   // 	mPrefs = getSharedPreferences("GVBetterPrefs", Context.MODE_PRIVATE);
-   // 	mPrefsEdit = mPrefs.edit();
+    }
+        
+    public void readPreferences(){
+    	 mPrefs = getPreferences( MODE_PRIVATE );    	 
 
+    	 String host = mPrefs.getString("host", "82.161.162.51" );
+       	 int port = mPrefs.getInt("port", 5858 );
+       	 int client = mPrefs.getInt("client", 1 );
+       	 int bufferSize = mPrefs.getInt("bufferSize", 60 );
+       	 int updateServerTime = mPrefs.getInt("updateServerTime", 30 );
+
+     	 int sensorid = mPrefs.getInt("sensor", 1 );
+ 	     int forwardid = mPrefs.getInt("forward", 1 );
+ 	     int sideid = mPrefs.getInt("side", 0 );
+ 	     int gravityid = mPrefs.getInt("gravity", 2 );
+ 	     int window = mPrefs.getInt("window", 200 );
+ 	     int updateTime = mPrefs.getInt("updateTime", 10 );
+ 	     float acc = mPrefs.getFloat("acc", 0.3f );
+ 	     float steady = mPrefs.getFloat("steady", 0.2f );
+         float dec1 = mPrefs.getFloat("dec1", 0.25f );
+         float dec2 = mPrefs.getFloat("dec2", -0.5f );
+         float still1 = mPrefs.getFloat("still1", 0.1f );
+         float still2 = mPrefs.getFloat("still2", 0.1f );
+         float stilltime = mPrefs.getFloat("stilltime", 3.0f );
+         float offsetma = mPrefs.getFloat("offsetma", 0.95f );
+         boolean localLog = mPrefs.getBoolean( "localLog", false );
+         boolean signForward = mPrefs.getBoolean( "signForward", false );
+         
+         RadioButton rb;
+     	 switch ( sensorid  ) {
+     		case 0:
+     			rb = (RadioButton) findViewById(R.id.radioAcc);
+     			rb.setChecked( true );
+     			break;
+     		case 1:
+     			rb = (RadioButton) findViewById(R.id.radioLinAcc);
+     			rb.setChecked( true );
+     			break;
+     	}
+     	switch ( forwardid  ) {
+     		case 0:
+     			rb = (RadioButton) findViewById(R.id.radioFX);
+     			rb.setChecked( true );
+     			break;
+     		case 1:
+     			rb = (RadioButton) findViewById(R.id.radioFY);
+     			rb.setChecked( true );
+     			break;
+     		case 2:
+     			rb = (RadioButton) findViewById(R.id.radioFZ);
+     			rb.setChecked( true );
+     			break;
+     	}
+     	switch ( sideid  ) {
+ 		case 0:
+ 			rb = (RadioButton) findViewById(R.id.radioSX);
+ 			rb.setChecked( true );
+ 			break;
+ 		case 1:
+ 			rb = (RadioButton) findViewById(R.id.radioSY);
+ 			rb.setChecked( true );
+ 			break;
+ 		case 2:
+ 			rb = (RadioButton) findViewById(R.id.radioSZ);
+ 			rb.setChecked( true );
+ 			break;
+     	}
+     	switch ( gravityid  ) {
+ 		case 0:
+ 			rb = (RadioButton) findViewById(R.id.radioGX);
+ 			rb.setChecked( true );
+ 			break;
+ 		case 1:
+ 			rb = (RadioButton) findViewById(R.id.radioGY);
+ 			rb.setChecked( true );
+ 			break;
+ 		case 2:
+ 			rb = (RadioButton) findViewById(R.id.radioGZ);
+ 			rb.setChecked( true );
+ 			break;
+     	}
+
+     	EditText ed = (EditText) findViewById(R.id.acceleration);
+     	ed.setText( Float.toString( acc ) );
+     	 
+ 		ed = (EditText) findViewById(R.id.steady);
+ 		ed.setText( Float.toString(  steady ) );
+     	
+     	ed = (EditText) findViewById(R.id.decelThresS);
+     	ed.setText( Float.toString(  dec1 ) );
+     	ed = (EditText) findViewById(R.id.decelThresM);
+     	ed.setText( Float.toString(  dec2 ) );     	
+     	ed = (EditText) findViewById(R.id.stillThres1);
+     	ed.setText( Float.toString(  still1 ) );
+     	ed = (EditText) findViewById(R.id.stillThres2);
+     	ed.setText( Float.toString(  still2) );
+     	ed = (EditText) findViewById(R.id.stillThresTime);
+     	ed.setText( Float.toString(  stilltime ) );
+     	ed = (EditText) findViewById(R.id.offsetMA);
+     	ed.setText( Float.toString(  offsetma ) );
+     	ed = (EditText) findViewById(R.id.editWindow);
+     	ed.setText( Integer.toString( window ) );
+     	ed = (EditText) findViewById(R.id.editUpdate);
+     	ed.setText( Integer.toString( updateTime ) );
+     	
+     	ed = (EditText) findViewById(R.id.editUpdateServer );
+     	ed.setText( Float.toString(  updateServerTime ) );
+     	ed = (EditText) findViewById(R.id.editHost);
+     	ed.setText( host );
+     	ed = (EditText) findViewById(R.id.editPort );
+     	ed.setText( Integer.toString( port ) );
+     	ed = (EditText) findViewById(R.id.editClient );
+     	ed.setText( Integer.toString( client ) );
+     	ed = (EditText) findViewById(R.id.editBuffer );
+     	ed.setText( Integer.toString( bufferSize ) );
+     	
+    	CheckBox cb = (CheckBox) findViewById(R.id.localLog);
+    	cb.setChecked( localLog );
+    	cb = (CheckBox) findViewById(R.id.signForward);
+    	cb.setChecked( signForward );
+    }
+    
+    public void storePreferences(){
+    	SharedPreferences.Editor mPrefsEdit = mPrefs.edit();
+
+    	RadioGroup rg = (RadioGroup) findViewById(R.id.radioGroupAcc);
+    	int selected = rg.getCheckedRadioButtonId();
+    	int sensorid = -1;
+    	switch ( selected ) {
+    		case R.id.radioAcc:
+    			sensorid = 0;
+    			break;
+    		case R.id.radioLinAcc:
+    			sensorid = 1;
+    			break;
+    	}
+
+    	rg = (RadioGroup) findViewById(R.id.radioGroupForward);
+    	selected = rg.getCheckedRadioButtonId();
+    	int forwardid = -1;
+    	switch ( selected ) {
+    		case R.id.radioFX:
+    			forwardid = 0;
+    			break;
+    		case R.id.radioFY:
+    			forwardid = 1;
+    			break;
+    		case R.id.radioFZ:
+    			forwardid = 2;
+    			break;
+    	}
+
+    	rg = (RadioGroup) findViewById(R.id.radioGroupGravity);
+    	selected = rg.getCheckedRadioButtonId();
+    	int gravityid = -1;
+    	switch ( selected ) {
+    		case R.id.radioGX:
+    			gravityid = 0;
+    			break;
+    		case R.id.radioGY:
+    			gravityid = 1;
+    			break;
+    		case R.id.radioGZ:
+    			gravityid = 2;
+    			break;
+    	}
+
+    	rg = (RadioGroup) findViewById(R.id.radioGroupSideways);
+    	selected = rg.getCheckedRadioButtonId();
+    	int sideid = -1;
+    	switch ( selected ) {
+    		case R.id.radioSX:
+    			sideid = 0;
+    			break;
+    		case R.id.radioSY:
+    			sideid = 1;
+    			break;
+    		case R.id.radioSZ:
+    			sideid = 2;
+    			break;
+    	}
+    	
+
+    	EditText ed = (EditText) findViewById(R.id.acceleration);
+    	float acc = 0.3f;
+    	
+    	try {
+    	    acc = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
+		ed = (EditText) findViewById(R.id.steady);
+    	float steady = 0.5f;
+    	
+    	try {
+    	    steady = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
+    	ed = (EditText) findViewById(R.id.decelThresS);
+    	float dec1 = 0.3f;
+    	try {
+    	    dec1 = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
+    	ed = (EditText) findViewById(R.id.decelThresM);
+    	float dec2 = 0.3f;
+    	try {
+    	    dec2 = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	}
+    	
+    	ed = (EditText) findViewById(R.id.stillThres1);
+    	float still1 = 0.3f;
+    	try {
+    	    still1 = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
+    	ed = (EditText) findViewById(R.id.stillThres2);
+    	float still2 = 0.3f;
+    	try {
+    	    still2 = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
+    	ed = (EditText) findViewById(R.id.stillThresTime);
+    	float stilltime = 3.0f;
+    	try {
+    	    stilltime = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
+    	ed = (EditText) findViewById(R.id.offsetMA);
+    	float offsetma = 0.95f;
+    	try {
+    	    offsetma = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
+    	ed = (EditText) findViewById(R.id.editWindow);
+    	int window = 200;
+    	
+    	try {
+    	    window= Integer.parseInt(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
+    	ed = (EditText) findViewById(R.id.editUpdate);
+    	int updateTime = 10;
+    	
+    	try {
+    	    updateTime= Integer.parseInt(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
+    	ed = (EditText) findViewById(R.id.editUpdateServer );
+    	int updateServerTime = 30000;
+    	try {
+    	    updateServerTime = Integer.parseInt(ed.getText().toString()) * 1000;
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	}
+    	
+    	ed = (EditText) findViewById(R.id.editHost);
+    	String host = ed.getText().toString();
+
+    	ed = (EditText) findViewById(R.id.editPort );
+    	int port = 5555;
+    	try {
+    	    port  = Integer.parseInt( ed.getText().toString() );
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
+    	ed = (EditText) findViewById(R.id.editClient );
+    	int client = 0;
+    	try {
+    	    client  = Integer.parseInt( ed.getText().toString() );
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
+    	ed = (EditText) findViewById(R.id.editBuffer );
+    	//mBufferSize = Integer.parseInt( ed.getText().toString() );
+    	int bufferSize = 60;
+    	try {
+    	    bufferSize = Integer.parseInt(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	}
+
+    	CheckBox cb = (CheckBox) findViewById(R.id.localLog);
+    	mPrefsEdit.putBoolean("localLog", cb.isChecked() );
+    	cb = (CheckBox) findViewById(R.id.signForward);
+    	mPrefsEdit.putBoolean("signForward", cb.isChecked() );
+
+    	mPrefsEdit.putString("host", host );
+       	mPrefsEdit.putInt("port", port );
+        mPrefsEdit.putInt("client", client );
+        mPrefsEdit.putInt("bufferSize", bufferSize );
+        mPrefsEdit.putInt("updateServerTime", updateServerTime / 1000 );
+
+    	mPrefsEdit.putInt("sensor", sensorid );
+	    mPrefsEdit.putInt("forward", forwardid );
+	    mPrefsEdit.putInt("side", sideid );
+	    mPrefsEdit.putInt("gravity", gravityid );
+	    mPrefsEdit.putInt("window", window );
+	    mPrefsEdit.putInt("updateTime", updateTime );
+	    mPrefsEdit.putFloat("acc", acc );
+	    mPrefsEdit.putFloat("steady", steady );
+        mPrefsEdit.putFloat("dec1", dec1 );
+        mPrefsEdit.putFloat("dec2", dec2 );
+        mPrefsEdit.putFloat("still1", still1 );
+        mPrefsEdit.putFloat("still2", still2 );
+        mPrefsEdit.putFloat("stilltime", stilltime );
+        mPrefsEdit.putFloat("offsetma", offsetma );
+	    
+    	
+    	mPrefsEdit.commit();
     }
 
     @Override
     protected void onStart() {
     	super.onStart();
     	        
+    	readPreferences();
         // Prepare UI elements
         setButtonsListeners();
         
         // Enable UI buttons
         toggleUIStatus(false);
     }
+    
+    @Override
+    protected void onStop(){
+    	super.onStop();
+    	closeLocalLog();
+    	storePreferences();
+    }
 
+    @Override
     protected void onResume()
     {
         super.onResume();
@@ -913,6 +1290,7 @@ public class GuesstimateVelocityBetter extends Activity {
 			@Override
 			public void onClick(View v) {
 				startEstimateService();
+				createLocalLog();
 //				startTransmitterService();
 			}
 		});
@@ -923,6 +1301,7 @@ public class GuesstimateVelocityBetter extends Activity {
 			@Override
 			public void onClick(View v) {
 				stopEstimateService();
+				closeLocalLog();
 //				stopTransmitterService();
 			}
 		});
@@ -982,82 +1361,43 @@ public class GuesstimateVelocityBetter extends Activity {
 //        	tv.setText((recording) ? R.string.status_recording_running : R.string.status_recording_stopped);
     	}
 
-/*
-    public void setupBuffer(){
-    	mBuffer = new CircularStringArrayBuffer( mBufferSize );
-    }
-
-    private String formatDate(Date date) {
-		String format = "yy-MM-dd HH.mm.ss";
-		SimpleDateFormat formatter = new SimpleDateFormat(format);
-		return formatter.format(date); 	
-	}
-
-    private void addDataToBuffer( int newdata ){
-    	// add data to circular buffer
-    	String [] currentVals = new String[2];
-    	Date now = new Date();
-    	currentVals[0] = formatDate( now );
-    	currentVals[1] = String.format("%.2f", (float) newdata * 0.36f );
-    	mSpeed = (float) newdata * 0.36f;
-    	mBuffer.add( currentVals );
-    }
-        
-    public void setupUploader(){    	
-        this.uploadTimer = new Timer();
-    	mSendDataTimerTask = new TimerTask() {
-    		public void run() {
-    			uploadData();
-    		}
-		};
-		uploadTimer.scheduleAtFixedRate( mSendDataTimerTask, 0, mUpdateServerTime );
-
-    }
-    public void uploadData(){
-    	//VelocityBufferTransmitter uploader = new VelocityBufferTransmitter();
-    	//uploader.execute( new String[] { mHost, String.format("%i", mPort ) } );
-    	Toast.makeText(GuesstimateVelocityBetter.this, String.format("Velocity: %.2f", mSpeed ), Toast.LENGTH_SHORT).show();    	
-    }
-*/
-
-    /*
-    private class VelocityBufferTransmitter extends AsyncTask< String, Void, String > {
-    	@Override
-    	protected String doInBackground(String... urls) {
-    		String response = "";
-    		Toast.makeText(GuesstimateVelocityBetter.this, String.format("Velocity: %.2f", mSpeed ), Toast.LENGTH_SHORT).show();
-			
+    private boolean mWritingLocalLog;
+    private SensorOutputWriter mLocalLog;
+    
+    public void createLocalLog() {
+    	CheckBox cb = (CheckBox) findViewById(R.id.localLog);
+    	mWritingLocalLog = false;
+    	//mBuffer = new CircularStringArrayBuffer( mBufferSize );
+    	if (cb.isChecked() ){    		
     		try {
-    			
-    	        Socket s = new Socket( urls[0], Integer.parseInt( urls[1] ) );
-    	       
-    	        //outgoing stream redirect to socket
-    	        OutputStream out = s.getOutputStream();
-    	       
-    	        PrintWriter output = new PrintWriter(out);
-    	        // print the circular buffer
-    	        output.println("Hello Android!");
-    	        
-    	        //Close connection
-    	        s.close();
-    	           	       
-    		} catch (UnknownHostException e) {
-    	        // TODO Auto-generated catch block
-    	        e.printStackTrace();
-    		} catch (IOException e) {
-    	        // TODO Auto-generated catch block
-    	        e.printStackTrace();
+    			mLocalLog = new SensorOutputWriter(SensorOutputWriter.TYPE_GVB);
+    			mWritingLocalLog = true;
+    		} catch (StorageErrorException ex) {
+    			ex.printStackTrace();
     		}
-    	        
-    		return response;
     	}
-    	
-    	@Override
-    	protected void onPostExecute(String result) {
-    		TextView tv1 = (TextView) findViewById(R.id.TransmitterStatusTextView);
-			tv1.setText( result );
-    	}    	
     }
-    */
+    
+    public void writeLogData( float[] values ){
+    	if ( mWritingLocalLog ){
+    		try {
+    			mLocalLog.writeReadings(values);
+    		} catch (StorageErrorException ex) {
+    			ex.printStackTrace();
+    		}	
+    	}
+    }
+    
+    public void closeLocalLog(){
+    	if ( mWritingLocalLog ){
+    		try {
+    			mLocalLog.close();
+    		} catch (StorageErrorException ex) {
+    			ex.printStackTrace();
+    		}
+    	}
+    	mWritingLocalLog = false;
+    }
+    
 }
 

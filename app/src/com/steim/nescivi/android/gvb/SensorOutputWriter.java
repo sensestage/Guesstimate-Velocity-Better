@@ -16,6 +16,7 @@ public class SensorOutputWriter {
 	public static final String TYPE_MAGNETIC = "Magnetic";
 	public static final String TYPE_GYRO = "Gyroscope";
 	public static final String TYPE_LIGHT = "Light";
+	public static final String TYPE_GVB = "GVB";
 	public static final String TYPE_OTHER_UNKNOWN = "Other-unknown";	
 	public static final String OUTPUT_DIRECTORY = "GVB";
 	public static final int BUFFER_SIZE = 100;

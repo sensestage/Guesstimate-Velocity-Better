@@ -124,7 +124,12 @@ public class VelocityEstimator extends Service {
 	private float threshold_still_time = 3.0f;
 	private float threshold_decel_std = 0.25f;
 	private float threshold_decel_mean = -0.5f;
-	private float threshold_steady = 0.5f;	
+	private float threshold_steady = 0.5f;
+	
+	// moving average for offset:
+	private float macoef = 0.99f;
+	
+	private float forwardsign = 1.f;
 
 	private String mHost;
 	private int mPort;
@@ -160,6 +165,9 @@ public class VelocityEstimator extends Service {
 				set_threshold_steady( msg.getData().getFloat("steady") );
 				set_threshold_deceleration( msg.getData().getFloat("dec1"),msg.getData().getFloat("dec2") );
 				set_threshold_still( msg.getData().getFloat("still1"), msg.getData().getFloat("still2"), msg.getData().getFloat( "stilltime") );
+				set_offset_macoef( msg.getData().getFloat("offsetma") );
+				set_sign_forward( msg.getData().getInt("signForward") );
+				startEstimation();
     			break;
     		case MSG_SERVER_SETTINGS:
 				set_ip( msg.getData().getString("host") );
@@ -267,8 +275,12 @@ public class VelocityEstimator extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId)
     {            	
-    	Log.d("VelocityEstimator", "onStartCommand");
-		
+    	Log.d("VelocityEstimator", "onStartCommand");		
+
+        return Service.START_STICKY;
+    }
+    
+    public void startEstimation(){
 		mListener.startListening( this.mType, 0, this.mForward, this.mSideways, this.mGravity );
 		mCalcTimerTask = new TimerTask() {
 		  public void run() {
@@ -304,8 +316,6 @@ public class VelocityEstimator extends Service {
     	//this.runUploaderThread();
         
     	Toast.makeText(mContext, "VelocityEstimator starting", Toast.LENGTH_SHORT).show();
-    	
-        return Service.START_STICKY;
     }
 
     @Override
@@ -424,6 +434,10 @@ public class VelocityEstimator extends Service {
     
     /// --------- END DATA UPLOADER -------------
 
+    private void set_sign_forward( int sign ){    	
+    	this.forwardsign = (float) sign;
+    }
+
     private void set_window( int windowsize ){
     	if ( this.mWindowSize != windowsize ){
         	mBuffer = null;
@@ -486,6 +500,10 @@ public class VelocityEstimator extends Service {
     	threshold_still_time = newth3;
     }
 
+    private void set_offset_macoef( float newth1 ){
+    	macoef = newth1;
+    }
+
     private void send_server_update_msg()
     {
     	Bundle b = new Bundle();
@@ -516,7 +534,7 @@ public class VelocityEstimator extends Service {
     private void send_gui_update_msg(){
     	Bundle b = new Bundle();
     	Message msg = Message.obtain(null, MSG_GUI_UPDATE_MSG );
-    	b.putFloat("motion", mState );
+    	b.putInt("motion", mState );
     	b.putFloat("speed", mSpeed );
     	b.putFloat("facc_mean", this.mCurrentStats[0][0] );
     	b.putFloat("facc_std", this.mCurrentStats[1][0]  );
@@ -524,6 +542,9 @@ public class VelocityEstimator extends Service {
     	b.putFloat("sacc_std", this.mCurrentStats[1][1]  );
     	b.putFloat("gacc_mean", this.mCurrentStats[0][2] );
     	b.putFloat("gacc_std", this.mCurrentStats[1][2]  );
+    	b.putFloat("offset", this.mOffsets[0]  );
+    	b.putFloat("sign", this.forwardsign );
+    	b.putFloat("stilltime", this.mStillTime );
     	msg.setData(b);
     	if (mGuiClient != null)	{
     		try {
@@ -615,6 +636,13 @@ public class VelocityEstimator extends Service {
 		// calculate mean and standard deviation of buffers
 		mBuffer.getStats( mCurrentStats );
 		
+		// reset offsets when we are in still:
+		if ( this.mState == 0 ) {
+			for ( int axis = 0; axis < 3; axis++ ){
+				this.mOffsets[axis] = this.mOffsets[axis] * macoef + mCurrentStats[0][axis] * (1-macoef); 
+			}
+		}
+		
 		// substract offset from mean
 		for ( int axis = 0; axis < 3; axis++ ){
 			mCurrentStats[0][axis] = mCurrentStats[0][axis] - this.mOffsets[axis];  
@@ -649,18 +677,24 @@ public class VelocityEstimator extends Service {
 				}
 				break;	
 			}
-		
-		// if state == still, adjust offset
-		
+				
 		// calculate forward speed
 		switch (this.mState){
 		case 0: // still
 			this.mSpeed = (float) 0.0;
 			break;
-		case 1: // steady motion
 		case 2: // accelerating
+			// set the sign of what is forward:
+			/*
+			if ( mCurrentStats[0][0] < 0 ){
+				forwardsign = -1.f;				
+			} else {
+				forwardsign = 1.f;
+			}
+			*/
+		case 1: // steady motion
 		case 3: // decelerating
-			this.mSpeed += mCurrentStats[0][0] * this.mDeltaTime * 0.001;
+			this.mSpeed += mCurrentStats[0][0] * forwardsign * this.mDeltaTime * 0.001;
 			break;
 		default:
 			break;
