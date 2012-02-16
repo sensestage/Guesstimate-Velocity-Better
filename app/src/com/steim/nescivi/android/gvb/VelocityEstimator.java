@@ -740,7 +740,9 @@ public class VelocityEstimator extends Service {
 		// reset offsets when we are in still:
 		if ( this.mState == 0 ) {
 			for ( int axis = 0; axis < 3; axis++ ){
-				this.mOffsets[axis] = this.mOffsets[axis] * macoef + curStats[0][axis] * (1-macoef); 
+				if ( curStats[0][axis] < 20.f ){
+					this.mOffsets[axis] = this.mOffsets[axis] * macoef + curStats[0][axis] * (1-macoef);
+				}
 			}
 		}
 		
