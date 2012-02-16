@@ -29,7 +29,12 @@ public class SensorListener implements SensorEventListener, Runnable {
 	private int mSideways;
 	private int mGravity;
 	
+	private CircularFloatArrayBuffer2 mBuffer;
+	private int mWindow;
+	private int mDim;
+	
 	private float [] currentValues = {(float) 0.0, (float) 0.0, (float) 0.0};
+	private float [][] currentStats = { {(float) 0.0, (float) 0.0, (float) 0.0}, {(float) 0.0, (float) 0.0, (float) 0.0} };	
 	
 //	private SensorOutputWriter mAccelerometerLog, mLinearAccelerometerLog, mOrientationLog, mMagneticLog, mGyroLog, mLightLog;
 	private SensorManager mSensorManager;
@@ -40,7 +45,7 @@ public class SensorListener implements SensorEventListener, Runnable {
 		mSensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
 	}
 
-	public void startListening( int type, int rate, int forward, int sideways, int gravity) {
+	public void startListening( int type, int rate, int forward, int sideways, int gravity, int dim, int window) {
 		this.mType = type; // true is linear_acceleration, false is acceleromater
 		this.mRecordingRate = rate;
 		this.mRunning = true;
@@ -48,6 +53,11 @@ public class SensorListener implements SensorEventListener, Runnable {
 		this.mForward = forward;
 		this.mSideways = sideways;
 		this.mGravity = gravity;
+		
+		this.mWindow = window;
+		this.mDim = dim;
+		
+		mBuffer = new CircularFloatArrayBuffer2( this.mDim, this.mWindow );
 				
 		// Start recording thread
 		mThread = new Thread(this);
@@ -118,15 +128,29 @@ public class SensorListener implements SensorEventListener, Runnable {
 	//	long newtime = System.currentTimeMillis();
 	//	this.mTimeInterval = newtime - mLastTime;
 	//	this.mLastTime = newtime;
-		
-		this.currentValues[ 0 ] = readings[ this.mForward ];
-		this.currentValues[ 1 ] = readings[ this.mSideways ];
-		this.currentValues[ 2 ] = readings[ this.mGravity ];
-		
+		synchronized ( this ){
+			this.currentValues[ 0 ] = readings[ this.mForward ];
+			this.currentValues[ 1 ] = readings[ this.mSideways ];
+			this.currentValues[ 2 ] = readings[ this.mGravity ];
+			mBuffer.add( currentValues );			 
+		}
+	}
+	
+	float [][] getCurrentStats(){
+		float [][] curStats;
+		synchronized (this){
+			this.currentStats = mBuffer.getStats();
+			curStats = this.currentStats; 
+		}
+		return curStats;
 	}
 	
 	float [] getCurrentValues(){
-		return this.currentValues;
+		float [] vals;
+		synchronized (this){
+			vals = this.currentValues;
+		}
+		return vals;
 	}
 
 

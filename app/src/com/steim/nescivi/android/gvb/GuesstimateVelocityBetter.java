@@ -32,6 +32,14 @@ import android.content.SharedPreferences;
 
 import android.view.WindowManager;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.os.PowerManager;
+
+import java.util.Calendar;
+
+
 /*
 import java.util.Timer;
 import java.util.TimerTask;
@@ -726,7 +734,17 @@ public class GuesstimateVelocityBetter extends Activity {
     	if (cb.isChecked() ){
     		signForward = -1;
     	}
+
+    	ed = (EditText) findViewById(R.id.editUpdateLog );
+    	int logUpdateTime = 500;
+    	try {
+    	    logUpdateTime = Integer.parseInt(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	}    	
     	
+    	cb = (CheckBox) findViewById(R.id.localLog);
+
 		if (mVelService != null) {
     		Bundle b = new Bundle();
 	    	Message msg = Message.obtain(null, VelocityEstimator.MSG_ESTIMATE_SETTINGS );
@@ -745,6 +763,8 @@ public class GuesstimateVelocityBetter extends Activity {
         	b.putFloat("stilltime", stilltime );
         	b.putFloat("offsetma", offsetma );
         	b.putInt("signForward", signForward );
+        	b.putBoolean( "makeLocalLog", cb.isChecked() );
+        	b.putInt("updateLogTime", logUpdateTime );
 	    	msg.setData(b);
 
 	    	try {
@@ -758,9 +778,9 @@ public class GuesstimateVelocityBetter extends Activity {
 	
 	public void send_server_settings(){
     	EditText ed = (EditText) findViewById(R.id.editUpdateServer );
-    	int updateServerTime = 30000;
+    	int updateServerTime = 30;
     	try {
-    	    updateServerTime = Integer.parseInt(ed.getText().toString()) * 1000;
+    	    updateServerTime = Integer.parseInt(ed.getText().toString());
     	} catch(NumberFormatException nfe) {
     	   System.out.println("Could not parse " + nfe);
     	}
@@ -810,7 +830,7 @@ public class GuesstimateVelocityBetter extends Activity {
         	b.putInt("port", port );
         	b.putInt("client", client );
         	b.putInt("bufferSize", bufferSize );
-        	b.putInt("updateServerTime", updateServerTime );
+        	b.putInt("updateServerTime", updateServerTime * 1000 );
         	b.putBoolean( "makeLocalLog", cb.isChecked() );
         	b.putInt("updateLogTime", logUpdateTime );
 	    	msg.setData(b);
@@ -853,8 +873,8 @@ public class GuesstimateVelocityBetter extends Activity {
     		set_update_server();
 			*/
     		
-    		send_estimate_settings();
     		send_server_settings();
+    		send_estimate_settings();
 
     		
     		/*
@@ -1021,7 +1041,7 @@ public class GuesstimateVelocityBetter extends Activity {
      	ed.setText( Integer.toString( updateTime ) );
      	
      	ed = (EditText) findViewById(R.id.editUpdateServer );
-     	ed.setText( Float.toString(  updateServerTime ) );
+     	ed.setText( Integer.toString(  updateServerTime ) );
      	ed = (EditText) findViewById(R.id.editHost);
      	ed.setText( host );
      	ed = (EditText) findViewById(R.id.editPort );
@@ -1185,9 +1205,9 @@ public class GuesstimateVelocityBetter extends Activity {
     	} 
 
     	ed = (EditText) findViewById(R.id.editUpdateServer );
-    	int updateServerTime = 30000;
+    	int updateServerTime = 30;
     	try {
-    	    updateServerTime = Integer.parseInt(ed.getText().toString()) * 1000;
+    	    updateServerTime = Integer.parseInt(ed.getText().toString());
     	} catch(NumberFormatException nfe) {
     	   System.out.println("Could not parse " + nfe);
     	}
@@ -1237,7 +1257,7 @@ public class GuesstimateVelocityBetter extends Activity {
        	mPrefsEdit.putInt("port", port );
         mPrefsEdit.putInt("client", client );
         mPrefsEdit.putInt("bufferSize", bufferSize );
-        mPrefsEdit.putInt("updateServerTime", updateServerTime / 1000 );
+        mPrefsEdit.putInt("updateServerTime", updateServerTime );
         mPrefsEdit.putInt("updateLogTime", logUpdateTime );
 
     	mPrefsEdit.putInt("sensor", sensorid );
@@ -1432,5 +1452,61 @@ public class GuesstimateVelocityBetter extends Activity {
     }
     */
     
+    /*
+    void setupDayRhythm(){
+    	AlarmManager am = (AlarmManager) GuesstimateVelocityBetter.this.getSystemService(Context.ALARM_SERVICE);
+    	Calendar calendar = Calendar.getInstance();
+    	Calendar calendar2 = Calendar.getInstance();
+
+    	// 	9:00 on 
+    	calendar.set(Calendar.HOUR_OF_DAY, 9);
+    	calendar.set(Calendar.MINUTE, 0);
+    	calendar.set(Calendar.SECOND, 0);
+    	PendingIntent pi1 = PendingIntent.getService(GuesstimateVelocityBetter.this, 0, new Intent(GuesstimateVelocityBetter.this, VelocityEstimator.class), PendingIntent.FLAG_UPDATE_CURRENT);
+    	am.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pi1);
+
+    	// 	21:00 off
+    	calendar.set(Calendar.HOUR_OF_DAY, 21);
+    	calendar.set(Calendar.MINUTE, 0);
+    	calendar.set(Calendar.SECOND, 0);
+    	PendingIntent pi2 = PendingIntent.getService(GuesstimateVelocityBetter.this, 1, new Intent(GuesstimateVelocityBetter.this, VelocityEstimator.class), PendingIntent.FLAG_UPDATE_CURRENT);
+    	am.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pi2);
+
+    }
+    */
 }
 
+/*
+public class Alarm extends BroadcastReceiver 
+{    
+     @Override
+     public void onReceive(Context context, Intent intent) 
+     {   
+         PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+         PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "YOUR TAG");
+         wl.acquire();
+
+         // Put here YOUR code.
+         Toast.makeText(context, "WAKE UP, the TRAM starts!", Toast.LENGTH_LONG).show(); // For example
+
+         wl.release();
+     }
+
+ public void SetAlarm(Context context)
+ {
+     AlarmManager am=(AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
+     Intent i = new Intent(context, Alarm.class);
+     PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
+     am.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), 1000 * 60 * 10, pi); // Millisec * Second * Minute
+ }
+
+ public void CancelAlarm(Context context)
+ {
+     Intent intent = new Intent(context, Alarm.class);
+     PendingIntent sender = PendingIntent.getBroadcast(context, 0, intent, 0);
+     AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+     alarmManager.cancel(sender);
+ }
+ 
+}
+    */

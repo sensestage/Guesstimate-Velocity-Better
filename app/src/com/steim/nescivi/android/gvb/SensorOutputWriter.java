@@ -32,7 +32,7 @@ public class SensorOutputWriter {
 		
 		ensureOutputDirectoryExists();
 		
-		mBuffer = new CircularFloatArrayBuffer(BUFFER_SIZE);
+	//	mBuffer = new CircularFloatArrayBuffer(BUFFER_SIZE);
 		
 		try {
 			startLog();
@@ -51,16 +51,21 @@ public class SensorOutputWriter {
 
 		// Construct string to write in output and array to store in buffer
 		sb.append(timeOffset);
-		float toBuffer[] = new float[readings.length + 1];
-		toBuffer[0] = timeOffset;
+	//	float toBuffer[] = new float[readings.length + 1];
+	//	toBuffer[0] = timeOffset;
 		for (int i = 0; i < readings.length; i ++) {
 			sb.append(" " + readings[i]);
-			toBuffer[i+1] = readings[i];
+		//	toBuffer[i+1] = readings[i];
 		}
 
-		// Write string in output and add to buffer
-		writeLine(sb.toString());
-		mBuffer.add(toBuffer);
+		try{ 
+			// 	Write string in output and add to buffer
+			writeLine(sb.toString());
+		} catch (StorageErrorException e) {
+			throw new StorageErrorException("Could not write to output: " + e.getLocalizedMessage());
+		} 
+		
+		//mBuffer.add(toBuffer);
 		
 	}
 	
@@ -149,6 +154,7 @@ public class SensorOutputWriter {
 		return formatter.format(date); 	
 	}
 	
+	
 	public float[][] getBuffer() {
 		if (mBuffer.getSize() == 0) {
 			return new float[0][0];
@@ -158,5 +164,6 @@ public class SensorOutputWriter {
 			return result;
 		}
 	}
+	
 	
 }

@@ -2,26 +2,35 @@ package com.steim.nescivi.android.gvb;
 
 import java.lang.Math;
 
-public class CircularFloatArrayBuffer {
+public class CircularFloatArrayBuffer2 {
 	private int mSize, mNewestElement;
-	private float mBuffer[][];
+	private double mBuffer[][];
+	private int mDim;
 	
-	public CircularFloatArrayBuffer(int size) {
+	public CircularFloatArrayBuffer2(int dim, int size) {
 		if (size < 1) {
+			throw new IllegalArgumentException();
+		}
+		if (dim < 1) {
 			throw new IllegalArgumentException();
 		}
 		
 		// Create buffer
-		mBuffer = new float[size][];
+		mBuffer = new double[dim][size];
 		
 		// Initialize pointers
 		mNewestElement = size - 1;
 		mSize = 0;
+		mDim = dim;
 	}
 	
 	public void add(float elem[]) {
 		int victim = (mNewestElement + 1) % mBuffer.length;
-		mBuffer[victim] = elem;
+		
+		for ( int i=0; i<mDim; i++ ){
+			mBuffer[i][victim] = elem[i];
+		}
+		
 		mNewestElement = victim;
 		
 		if (mSize < mBuffer.length) {
@@ -33,29 +42,45 @@ public class CircularFloatArrayBuffer {
 	public int getSize() {
 		return mSize;
 	}
-	
+
+	public int getDim() {
+		return mDim;
+	}
+
 	public float[][] getContents() {
-		float result[][] = new float[mSize][];
+		float result[][] = new float[mDim][mSize];
 		
 		if (mSize == mBuffer.length) {
 			int oldestElement = (mNewestElement + 1) % mBuffer.length;
 			
-			for (int i = 0; i < result.length; i++) {
-				result[i] = mBuffer[oldestElement];
+			for ( int j=0; j<mDim; j++ ){
+				for (int i = 0; i < result.length; i++) {
+					result[j][i] = (float) mBuffer[j][oldestElement];
 	
-				if (++oldestElement == mBuffer.length)
-					oldestElement = 0;
+					if (++oldestElement == mBuffer.length)
+						oldestElement = 0;
+				}
 			}
 		}
 		else {
-			//special case here: buffer is not filled yet (so just dump the buffer)
-			for (int i = 0; i < result.length; i++) {
-				result[i] = mBuffer[i];
+			for ( int j=0; j<mDim; j++ ){
+				//	special case here: buffer is not filled yet (so just dump the buffer)
+				for (int i = 0; i < result.length; i++) {
+					result[j][i] = (float) mBuffer[j][i];
+				}
 			}
 		}
 		
 		return result;
 	}
+	
+	public static double sum(double[] a) {
+        double sum = 0.0;
+        for (int i = 0; i < a.length; i++) {
+            sum += a[i];
+        }
+        return sum;
+    }
 	
 	float[][] getStats(){
 		double vart;
@@ -69,27 +94,36 @@ public class CircularFloatArrayBuffer {
 	    */
 	    
 	    // mean
+		for ( int axis = 0; axis < 3; axis++ ){
+			means[axis] = sum( this.mBuffer[axis] ) / this.mSize;			
+		}
+		/*
 	    for (int i = 0; i < this.mSize; i++){
-	    	for ( int axis = 0; axis < 3; axis++ ){
+	    	
 	    		means[axis] += this.mBuffer[i][axis];
 	    	}
 	    }
 	    for ( int axis = 0; axis < 3; axis++ ){
 	    	means[axis] = means[axis] / (float) this.mSize;
 	    }
+	    */
 
 	    // standard deviation
 	    // std = sqrt(mean( abs(x - x.mean())**2) )
-	    for (int i = 0; i < this.mSize; i++){
-	    	for ( int axis = 0; axis < 3; axis++ ){
-	    		vart = this.mBuffer[i][axis] - means[axis];
-	    		stds[axis] += vart*vart;
-	    	}
-	    }
+		
+		if ( this.mSize > 1 ){
+			for ( int axis = 0; axis < 3; axis++ ){
+				for (int i = 0; i < this.mSize; i++) {
+					vart = this.mBuffer[axis][i] - means[axis];
+					stds[axis] += vart * vart;
+				}
+				stds[axis] = stds[axis] / (this.mSize-1);
+			}
+		}
 
 	    for ( int axis = 0; axis < 3; axis++ ){
 	    	stats[0][axis] = (float) means[axis];
-	    	stats[1][axis] = (float) Math.sqrt( stds[axis] / (float) this.mSize ); 
+	    	stats[1][axis] = (float) Math.sqrt( stds[axis] ); 
 	    }
 
 	    /*
