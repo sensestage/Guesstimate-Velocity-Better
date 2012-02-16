@@ -87,6 +87,8 @@ public class VelocityEstimator extends Service {
 
     
 	private Timer timer = new Timer();
+	
+	private Timer timer2 = new Timer();
 
 	//private Thread myThread;
 	//private boolean mRunning;
@@ -407,7 +409,7 @@ public class VelocityEstimator extends Service {
 		*/
 		
     	//timer.scheduleAtFixedRate( mLogTimerTask, 0, mLogUpdateTime );
-    	timer.scheduleAtFixedRate( mUploadTimerTask, 0, mUpdateServerTime );
+    	timer2.scheduleAtFixedRate( mUploadTimerTask, 0, mUpdateServerTime );
         
     	Toast.makeText(mContext, "VelocityEstimator sender and logger starting", Toast.LENGTH_SHORT).show();
     }
