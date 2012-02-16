@@ -30,6 +30,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.content.SharedPreferences;
 
+import android.view.WindowManager;
+
 /*
 import java.util.Timer;
 import java.util.TimerTask;
@@ -107,6 +109,7 @@ public class GuesstimateVelocityBetter extends Activity {
     			//	tv.setText(String.format("%.0f ", msg.getData().getFloat( "sign" ) ) );
     				tv = (TextView) findViewById(R.id.StillTextView);
     				tv.setText(String.format("%.0f ", msg.getData().getFloat( "stilltime" ) ) );
+    				/*
     				float [] logdata = { 
         					(float) msg.getData().getInt( "motion" ),
         					msg.getData().getFloat( "speed" ), 
@@ -122,6 +125,7 @@ public class GuesstimateVelocityBetter extends Activity {
         					msg.getData().getFloat( "stilltime" )
         				};
     				writeLogData( logdata );
+    				*/
     				break;
     				
     	/*			
@@ -788,7 +792,17 @@ public class GuesstimateVelocityBetter extends Activity {
     	} catch(NumberFormatException nfe) {
     	   System.out.println("Could not parse " + nfe);
     	}
+
+    	ed = (EditText) findViewById(R.id.editUpdateLog );
+    	int logUpdateTime = 500;
+    	try {
+    	    logUpdateTime = Integer.parseInt(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	}    	
     	
+    	CheckBox cb = (CheckBox) findViewById(R.id.localLog);
+
     	if (mVelService != null) {
     		Bundle b = new Bundle();
 	    	Message msg = Message.obtain(null, VelocityEstimator.MSG_SERVER_SETTINGS );
@@ -797,6 +811,8 @@ public class GuesstimateVelocityBetter extends Activity {
         	b.putInt("client", client );
         	b.putInt("bufferSize", bufferSize );
         	b.putInt("updateServerTime", updateServerTime );
+        	b.putBoolean( "makeLocalLog", cb.isChecked() );
+        	b.putInt("updateLogTime", logUpdateTime );
 	    	msg.setData(b);
 
 	    	try {
@@ -896,7 +912,7 @@ public class GuesstimateVelocityBetter extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.guesstimator);
-        
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
         
     public void readPreferences(){
@@ -907,6 +923,7 @@ public class GuesstimateVelocityBetter extends Activity {
        	 int client = mPrefs.getInt("client", 1 );
        	 int bufferSize = mPrefs.getInt("bufferSize", 60 );
        	 int updateServerTime = mPrefs.getInt("updateServerTime", 30 );
+       	 int updateLogTime = mPrefs.getInt("updateLogTime", 500 );
 
      	 int sensorid = mPrefs.getInt("sensor", 1 );
  	     int forwardid = mPrefs.getInt("forward", 1 );
@@ -924,6 +941,7 @@ public class GuesstimateVelocityBetter extends Activity {
          float offsetma = mPrefs.getFloat("offsetma", 0.95f );
          boolean localLog = mPrefs.getBoolean( "localLog", false );
          boolean signForward = mPrefs.getBoolean( "signForward", false );
+         
          
          RadioButton rb;
      	 switch ( sensorid  ) {
@@ -1017,6 +1035,8 @@ public class GuesstimateVelocityBetter extends Activity {
     	cb.setChecked( localLog );
     	cb = (CheckBox) findViewById(R.id.signForward);
     	cb.setChecked( signForward );
+     	ed = (EditText) findViewById(R.id.editUpdateLog );
+     	ed.setText( Integer.toString( updateLogTime ) );
     }
     
     public void storePreferences(){
@@ -1199,7 +1219,15 @@ public class GuesstimateVelocityBetter extends Activity {
     	} catch(NumberFormatException nfe) {
     	   System.out.println("Could not parse " + nfe);
     	}
-
+    	
+    	ed = (EditText) findViewById(R.id.editUpdateLog );
+    	int logUpdateTime = 500;
+    	try {
+    	    logUpdateTime = Integer.parseInt(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	}    	
+    	
     	CheckBox cb = (CheckBox) findViewById(R.id.localLog);
     	mPrefsEdit.putBoolean("localLog", cb.isChecked() );
     	cb = (CheckBox) findViewById(R.id.signForward);
@@ -1210,6 +1238,7 @@ public class GuesstimateVelocityBetter extends Activity {
         mPrefsEdit.putInt("client", client );
         mPrefsEdit.putInt("bufferSize", bufferSize );
         mPrefsEdit.putInt("updateServerTime", updateServerTime / 1000 );
+        mPrefsEdit.putInt("updateLogTime", logUpdateTime );
 
     	mPrefsEdit.putInt("sensor", sensorid );
 	    mPrefsEdit.putInt("forward", forwardid );
@@ -1245,7 +1274,7 @@ public class GuesstimateVelocityBetter extends Activity {
     @Override
     protected void onStop(){
     	super.onStop();
-    	closeLocalLog();
+    	//closeLocalLog();
     	storePreferences();
     }
 
@@ -1290,7 +1319,7 @@ public class GuesstimateVelocityBetter extends Activity {
 			@Override
 			public void onClick(View v) {
 				startEstimateService();
-				createLocalLog();
+			//	createLocalLog();
 //				startTransmitterService();
 			}
 		});
@@ -1301,7 +1330,7 @@ public class GuesstimateVelocityBetter extends Activity {
 			@Override
 			public void onClick(View v) {
 				stopEstimateService();
-				closeLocalLog();
+			//	closeLocalLog();
 //				stopTransmitterService();
 			}
 		});
@@ -1311,6 +1340,8 @@ public class GuesstimateVelocityBetter extends Activity {
     {
     	Intent intent = new Intent(GuesstimateVelocityBetter.this, VelocityEstimator.class);
     	startService(intent);
+    	register_with_VelocityService();
+    	
     	bindService(intent, mVelServiceConnection, Context.BIND_AUTO_CREATE);
     	toggleUIStatus(true);
     }
@@ -1361,6 +1392,7 @@ public class GuesstimateVelocityBetter extends Activity {
 //        	tv.setText((recording) ? R.string.status_recording_running : R.string.status_recording_stopped);
     	}
 
+    /*
     private boolean mWritingLocalLog;
     private SensorOutputWriter mLocalLog;
     
@@ -1398,6 +1430,7 @@ public class GuesstimateVelocityBetter extends Activity {
     	}
     	mWritingLocalLog = false;
     }
+    */
     
 }
 

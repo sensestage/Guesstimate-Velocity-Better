@@ -21,6 +21,7 @@ import android.util.Log;
 //import android.os.HandlerThread;
 //import android.os.Process;
 
+import android.widget.CheckBox;
 import android.widget.Toast;
 
 import java.util.Timer;
@@ -141,7 +142,13 @@ public class VelocityEstimator extends Service {
 
 	private TimerTask mCalcTimerTask;
 	private TimerTask mUploadTimerTask;
-	
+	private TimerTask mLogTimerTask;
+	private int mLogUpdateTime = 500;
+
+    private boolean mMakeLocalLog = false;
+    private boolean mWritingLocalLog = false;
+    private SensorOutputWriter mLocalLog;
+
     class IncomingHandler extends Handler
     {
     	/*
@@ -175,6 +182,9 @@ public class VelocityEstimator extends Service {
 				set_client( msg.getData().getInt("client") );
 				set_buffer_size( msg.getData().getInt("bufferSize") );
 				set_update_interval( msg.getData().getInt("updateServerTime"));
+				mMakeLocalLog = msg.getData().getBoolean("makeLocalLog");
+				mLogUpdateTime = msg.getData().getInt("updateLogTime");
+				startServerAndLog();
     			break;
    			case MSG_REGISTER_GUI_CLIENT:
     				mGuiClient = msg.replyTo;
@@ -287,12 +297,36 @@ public class VelocityEstimator extends Service {
     			updateVelocityMeasurement();
 		  }
 		};
+		/*
 		mUploadTimerTask = new TimerTask() {
 		  public void run() {
     			//uploadData();
     			uploadDataTCP();
 		  }
 		};
+		
+		if ( mMakeLocalLog ){
+			createLocalLog();
+			mLogTimerTask = new TimerTask() {
+				public void run(){
+					if ( mWritingLocalLog ){
+						float [] currentReadings = mListener.getCurrentValues();
+						float [] logdata = { 
+							(float) mState,
+							mSpeed, mSpeed * 3.6f,
+							mCurrentStats[0][0], mCurrentStats[1][0],
+							mCurrentStats[0][1], mCurrentStats[1][1],
+							mCurrentStats[0][2], mCurrentStats[1][2],
+							mOffsets[1],mOffsets[2],mOffsets[3],
+							mStillTime,
+							currentReadings[0],currentReadings[1], currentReadings[2]  
+						};
+						writeLogData( logdata );
+					}
+				}
+			}
+		}
+		*/
 		TimerTask msgTimerTask = new TimerTask() {
     		public void run() {
 			// add data to circular string buffer:
@@ -306,8 +340,9 @@ public class VelocityEstimator extends Service {
     		}
 		};
     	timer.scheduleAtFixedRate( mCalcTimerTask, 0, mUpdateTime );
+    	//timer.scheduleAtFixedRate( mLogTimerTask, 0, mLogUpdateTime );
     	timer.scheduleAtFixedRate( msgTimerTask, 0, 1000 );
-    	timer.scheduleAtFixedRate( mUploadTimerTask, 0, mUpdateServerTime );
+    	//timer.scheduleAtFixedRate( mUploadTimerTask, 0, mUpdateServerTime );
 
 		// start chart periodic update thread
     	//mRunning = true;
@@ -318,6 +353,42 @@ public class VelocityEstimator extends Service {
     	Toast.makeText(mContext, "VelocityEstimator starting", Toast.LENGTH_SHORT).show();
     }
 
+    public void startServerAndLog(){
+		mUploadTimerTask = new TimerTask() {
+		  public void run() {
+    			//uploadData();
+    			uploadDataTCP();
+		  }
+		};
+		
+		if ( mMakeLocalLog ){
+			createLocalLog();
+			mLogTimerTask = new TimerTask() {
+				public void run(){
+					if ( mWritingLocalLog ){
+						float [] currentReadings = mListener.getCurrentValues();
+						float [] logdata = { 
+							(float) mState,
+							mSpeed, mSpeed * 3.6f,
+							mCurrentStats[0][0], mCurrentStats[1][0],
+							mCurrentStats[0][1], mCurrentStats[1][1],
+							mCurrentStats[0][2], mCurrentStats[1][2],
+							mOffsets[0],mOffsets[1],mOffsets[2],
+							mStillTime,
+							currentReadings[0],currentReadings[1], currentReadings[2]  
+						};
+						writeLogData( logdata );
+					}
+				}
+			};
+		}
+		
+    	timer.scheduleAtFixedRate( mLogTimerTask, 0, mLogUpdateTime );
+    	timer.scheduleAtFixedRate( mUploadTimerTask, 0, mUpdateServerTime );
+        
+    	Toast.makeText(mContext, "VelocityEstimator sender and logger starting", Toast.LENGTH_SHORT).show();
+    }
+
     @Override
     public void onDestroy()
     {
@@ -325,6 +396,7 @@ public class VelocityEstimator extends Service {
     	Toast.makeText(mContext, "VelocityEstimator stopping", Toast.LENGTH_SHORT).show();
 
     	mListener.stopListening();
+    	closeLocalLog();
     	
     	if (timer != null){
 	    mCalcTimerTask.cancel();
@@ -536,13 +608,15 @@ public class VelocityEstimator extends Service {
     	Message msg = Message.obtain(null, MSG_GUI_UPDATE_MSG );
     	b.putInt("motion", mState );
     	b.putFloat("speed", mSpeed );
-    	b.putFloat("facc_mean", this.mCurrentStats[0][0] );
-    	b.putFloat("facc_std", this.mCurrentStats[1][0]  );
-    	b.putFloat("sacc_mean", this.mCurrentStats[0][1] );
-    	b.putFloat("sacc_std", this.mCurrentStats[1][1]  );
-    	b.putFloat("gacc_mean", this.mCurrentStats[0][2] );
-    	b.putFloat("gacc_std", this.mCurrentStats[1][2]  );
-    	b.putFloat("offset", this.mOffsets[0]  );
+		synchronized( this ){
+			b.putFloat("facc_mean", this.mCurrentStats[0][0] );
+			b.putFloat("facc_std", this.mCurrentStats[1][0]  );
+			b.putFloat("sacc_mean", this.mCurrentStats[0][1] );
+			b.putFloat("sacc_std", this.mCurrentStats[1][1]  );
+			b.putFloat("gacc_mean", this.mCurrentStats[0][2] );
+			b.putFloat("gacc_std", this.mCurrentStats[1][2]  );
+			b.putFloat("offset", this.mOffsets[0]  );
+		}
     	b.putFloat("sign", this.forwardsign );
     	b.putFloat("stilltime", this.mStillTime );
     	msg.setData(b);
@@ -626,7 +700,7 @@ public class VelocityEstimator extends Service {
 		long newtime = System.currentTimeMillis();
 		this.mDeltaTime = newtime - this.mLastTime;
 		this.mLastTime = newtime;
-		
+				
 		// get readings
 		float [] currentReadings = this.mListener.getCurrentValues();
 				
@@ -634,35 +708,36 @@ public class VelocityEstimator extends Service {
 		mBuffer.add( currentReadings );
 		
 		// calculate mean and standard deviation of buffers
-		mBuffer.getStats( mCurrentStats );
+		float [][] curStats = mBuffer.getStats();
+		//mCurrentStats = mBuffer.getStats();		
 		
 		// reset offsets when we are in still:
 		if ( this.mState == 0 ) {
 			for ( int axis = 0; axis < 3; axis++ ){
-				this.mOffsets[axis] = this.mOffsets[axis] * macoef + mCurrentStats[0][axis] * (1-macoef); 
+				this.mOffsets[axis] = this.mOffsets[axis] * macoef + curStats[0][axis] * (1-macoef); 
 			}
 		}
 		
 		// substract offset from mean
 		for ( int axis = 0; axis < 3; axis++ ){
-			mCurrentStats[0][axis] = mCurrentStats[0][axis] - this.mOffsets[axis];  
+			curStats[0][axis] = curStats[0][axis] - this.mOffsets[axis];  
 		}
 		
 		// determine state
 		switch (this.mState){
 			case 0: // still
 				mStillTime = 0.0f;
-				if ( mCurrentStats[1][0] > threshold_acceleration ){
+				if ( curStats[1][0] > threshold_acceleration ){
 					this.mState = 2;
 				}
 				break;
 			case 1: // steady motion
-				if ( mCurrentStats[1][0] > threshold_decel_std && mCurrentStats[0][0] < threshold_decel_mean ){
+				if ( curStats[1][0] > threshold_decel_std && curStats[0][0] < threshold_decel_mean ){
 					this.mState = 3;
 				}
 				break;
 			case 2: // accelerating
-				if ( mCurrentStats[1][0] < threshold_steady ){
+				if ( curStats[1][0] < threshold_steady ){
 					this.mState = 1;
 				}
 				break;	
@@ -672,7 +747,7 @@ public class VelocityEstimator extends Service {
 			}
 		if ( this.mState > 0 ){
 			// 	could add a time window before being still
-			if ( mCurrentStats[1][1] < threshold_still_side && mCurrentStats[1][0] < threshold_still_forward ){
+			if ( curStats[1][1] < threshold_still_side && curStats[1][0] < threshold_still_forward ){
 				this.mStillTime += (float) mDeltaTime * 0.001;
 				if ( mStillTime > threshold_still_time ){
 					this.mState = 0;
@@ -696,16 +771,23 @@ public class VelocityEstimator extends Service {
 			*/
 		case 1: // steady motion
 		case 3: // decelerating
-			this.mSpeed += mCurrentStats[0][0] * forwardsign * this.mDeltaTime * 0.001;
+			this.mSpeed += curStats[0][0] * forwardsign * this.mDeltaTime * 0.001;
 			break;
 		default:
 			break;
 		}
 		
+		synchronized( this ){
+			for ( int axis = 0; axis < 3; axis++ ){
+				mCurrentStats[0][axis] = curStats[0][axis];
+				mCurrentStats[1][axis] = curStats[1][axis]; 
+			}
+		}
+
 		// send speed message
 		//send_speed_msg();
 	}
-	
+    	
     public void uploadDataTCP(){
     	mTransmitStatus = "no host and port defined";
 		if ( mHost != null && mPort != 0 ){
@@ -743,12 +825,50 @@ public class VelocityEstimator extends Service {
        	}
 		send_server_update_msg();
     }
+    
+    
+    public void createLocalLog() {
+    	//CheckBox cb = (CheckBox) findViewById(R.id.localLog);
+    	mWritingLocalLog = false;
+    	//mBuffer = new CircularStringArrayBuffer( mBufferSize );
+    	if ( mMakeLocalLog ){    		
+    		try {
+    			mLocalLog = new SensorOutputWriter(SensorOutputWriter.TYPE_GVB);
+    			mWritingLocalLog = true;
+    		} catch (StorageErrorException ex) {
+    			ex.printStackTrace();
+    		}
+    	}
+    }
+    
+    public void writeLogData( float[] values ){
+    	if ( mWritingLocalLog ){
+    		try {
+    			mLocalLog.writeReadings(values);
+    		} catch (StorageErrorException ex) {
+    			ex.printStackTrace();
+    		}	
+    	}
+    }
+    
+    public void closeLocalLog(){
+    	if ( mWritingLocalLog ){
+    		try {
+    			mLocalLog.close();
+    		} catch (StorageErrorException ex) {
+    			ex.printStackTrace();
+    		}
+    	}
+    	mWritingLocalLog = false;
+    }
+
 	
+    /*
 	//@Override
 	public void runUploaderThread() {
 		while (myThread != null && mRunning ) {
 			send_server_update_msg();
-			/*
+			
 			if ( mHost != null && mPort != 0 ){
 				try {
     			
@@ -773,12 +893,13 @@ public class VelocityEstimator extends Service {
 				}
 				
 			}
-			*/
+			
 			try {
 				Thread.sleep( mUpdateServerTime );
 			} catch (InterruptedException e) { }
 		}
 	}
+	*/
 	
 }
 
