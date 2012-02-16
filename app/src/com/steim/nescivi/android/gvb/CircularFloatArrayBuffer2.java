@@ -25,7 +25,7 @@ public class CircularFloatArrayBuffer2 {
 	}
 	
 	public void add(float elem[]) {
-		int victim = (mNewestElement + 1) % mBuffer.length;
+		int victim = (mNewestElement + 1) % mBuffer[0].length;
 		
 		for ( int i=0; i<mDim; i++ ){
 			mBuffer[i][victim] = elem[i];
@@ -33,7 +33,7 @@ public class CircularFloatArrayBuffer2 {
 		
 		mNewestElement = victim;
 		
-		if (mSize < mBuffer.length) {
+		if (mSize < mBuffer[0].length) {
 			mSize++;
 		}
 		
@@ -50,11 +50,11 @@ public class CircularFloatArrayBuffer2 {
 	public float[][] getContents() {
 		float result[][] = new float[mDim][mSize];
 		
-		if (mSize == mBuffer.length) {
-			int oldestElement = (mNewestElement + 1) % mBuffer.length;
+		if (mSize == mBuffer[0].length) {
+			int oldestElement = (mNewestElement + 1) % mBuffer[0].length;
 			
 			for ( int j=0; j<mDim; j++ ){
-				for (int i = 0; i < result.length; i++) {
+				for (int i = 0; i < result[j].length; i++) {
 					result[j][i] = (float) mBuffer[j][oldestElement];
 	
 					if (++oldestElement == mBuffer.length)
@@ -65,7 +65,7 @@ public class CircularFloatArrayBuffer2 {
 		else {
 			for ( int j=0; j<mDim; j++ ){
 				//	special case here: buffer is not filled yet (so just dump the buffer)
-				for (int i = 0; i < result.length; i++) {
+				for (int i = 0; i < result[j].length; i++) {
 					result[j][i] = (float) mBuffer[j][i];
 				}
 			}
