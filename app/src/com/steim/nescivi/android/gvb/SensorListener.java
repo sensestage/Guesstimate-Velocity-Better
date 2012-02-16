@@ -33,6 +33,8 @@ public class SensorListener implements SensorEventListener, Runnable {
 	private int mWindow;
 	private int mDim;
 	
+	private int mLastElementStats;
+	
 	private float [] currentValues = {(float) 0.0, (float) 0.0, (float) 0.0};
 	private float [][] currentStats = { {(float) 0.0, (float) 0.0, (float) 0.0}, {(float) 0.0, (float) 0.0, (float) 0.0} };	
 	
@@ -138,9 +140,14 @@ public class SensorListener implements SensorEventListener, Runnable {
 	
 	float [][] getCurrentStats(){
 		float [][] curStats;
+		int lastEle;
 		synchronized (this){
-			this.currentStats = mBuffer.getStats();
-			curStats = this.currentStats; 
+			lastEle = mBuffer.getLastElement();
+			if ( lastEle != mLastElementStats ){
+				this.currentStats = mBuffer.getStats();
+			}
+			mLastElementStats = lastEle; 
+			curStats = this.currentStats;
 		}
 		return curStats;
 	}
