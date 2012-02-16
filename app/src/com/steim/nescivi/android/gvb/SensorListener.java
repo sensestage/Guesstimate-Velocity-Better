@@ -46,7 +46,7 @@ public class SensorListener implements SensorEventListener, Runnable {
 	}
 
 	public void startListening( int type, int rate, int forward, int sideways, int gravity, int dim, int window) {
-		this.mType = type; // true is linear_acceleration, false is acceleromater
+		this.mType = type; // true is linear_acceleration, false is accelerometer
 		this.mRecordingRate = rate;
 		this.mRunning = true;
 		
