@@ -163,12 +163,15 @@
 
 	<TextView android:textAppearance="?android:attr/textAppearanceLarge" android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/LocalLogLabelTextView" android:text="LOGGING" android:gravity="center_vertical|center_horizontal"></TextView>
 
+		<LinearLayout android:id="@+id/LinearLayout18" android:layout_width="fill_parent" android:layout_height="wrap_content" android:orientation="horizontal" >
 	        <CheckBox
             android:id="@+id/localLog"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="create a log on phone" />
-				
+	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/UpdateLabelTextView3" android:text="dt (ms)"></TextView>
+	      <EditText android:id="@+id/editUpdateLog" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="500" ></EditText>
+		</LinearLayout>	        				
 		  
     </LinearLayout>
   </ScrollView>
