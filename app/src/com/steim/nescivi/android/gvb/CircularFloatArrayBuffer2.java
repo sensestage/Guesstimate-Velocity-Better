@@ -82,36 +82,21 @@ public class CircularFloatArrayBuffer2 {
         return sum;
     }
 	
-	float[][] getStats(){
+	public int getLastElement(){
+		return mNewestElement;
+	}
+	
+	public float[][] getStats(){
 		double vart;
 		double[] stds = {0.0, 0.0, 0,0};
 		double[] means = {0.0, 0.0, 0,0};
 		float[][] stats = { {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} };
-		/*
-	    for ( int axis = 0; axis < 3; axis++ ){
-	    	stats[0][axis] = (float) 0.0;
-	    }
-	    */
-	    
-	    // mean
-		for ( int axis = 0; axis < 3; axis++ ){
-			means[axis] = sum( this.mBuffer[axis] ) / this.mSize;			
-		}
-		/*
-	    for (int i = 0; i < this.mSize; i++){
-	    	
-	    		means[axis] += this.mBuffer[i][axis];
-	    	}
-	    }
-	    for ( int axis = 0; axis < 3; axis++ ){
-	    	means[axis] = means[axis] / (float) this.mSize;
-	    }
-	    */
-
-	    // standard deviation
-	    // std = sqrt(mean( abs(x - x.mean())**2) )
 		
+	    // mean
 		if ( this.mSize > 1 ){
+			for ( int axis = 0; axis < 3; axis++ ){
+				means[axis] = sum( this.mBuffer[axis] ) / this.mSize;			
+			}		
 			for ( int axis = 0; axis < 3; axis++ ){
 				for (int i = 0; i < this.mSize; i++) {
 					vart = this.mBuffer[axis][i] - means[axis];
@@ -126,6 +111,19 @@ public class CircularFloatArrayBuffer2 {
 	    	stats[1][axis] = (float) Math.sqrt( stds[axis] ); 
 	    }
 
+		/*
+	    for (int i = 0; i < this.mSize; i++){
+	    	
+	    		means[axis] += this.mBuffer[i][axis];
+	    	}
+	    }
+	    for ( int axis = 0; axis < 3; axis++ ){
+	    	means[axis] = means[axis] / (float) this.mSize;
+	    }
+	    */
+
+	    // standard deviation
+	    // std = sqrt(mean( abs(x - x.mean())**2) )
 	    /*
 	    //float delta;
 		//int n = 0;
