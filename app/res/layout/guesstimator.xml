@@ -35,11 +35,16 @@
 	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/GXStdDevTextView" android:text="0.0 m/s^2"></TextView>
 	</TableRow>
 	<TableRow>
-	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/OffsetStatusLabelTextView" android:text="Offset/still"></TextView>
+	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/OffsetStatusLabelTextView" android:text="Offset/GPS"></TextView>
 	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/OffsetTextView" android:text="0.0 m/s"></TextView>
-	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/StillTextView" android:text="0.0"></TextView>
-	 </TableRow>
-		
+	  	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/GPSPrecTextView" android:text="0.0"></TextView>
+	 	 </TableRow>
+	<TableRow>
+	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/OffsetStatusLabelTextView" android:text="GPS"></TextView>
+	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/GPSTextView" android:text="0.0 m/s"></TextView>
+	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/GPSKmHTextView" android:text="0.0 km/h"></TextView>
+	 	  </TableRow>
+			
 	</TableLayout>
     </LinearLayout>
     
@@ -186,8 +191,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="create a log on phone" />
-	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/UpdateLabelTextView3" android:text="dt (ms)"></TextView>
-	      <EditText android:id="@+id/editUpdateLog" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="500" ></EditText>
+<!-- 	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/UpdateLabelTextView3" android:text="dt (ms)"></TextView> -->
+<!-- 	      <EditText android:id="@+id/editUpdateLog" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="500" ></EditText> -->
 		</LinearLayout>	        				
 		  
     </LinearLayout>

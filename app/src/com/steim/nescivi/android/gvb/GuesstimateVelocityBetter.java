@@ -32,13 +32,10 @@ import android.content.SharedPreferences;
 
 import android.view.WindowManager;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
-import android.os.PowerManager;
-
 import java.util.Calendar;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 
 /*
 import java.util.Timer;
@@ -87,6 +84,14 @@ public class GuesstimateVelocityBetter extends Activity {
     		TextView tv;
     		switch (msg.what)
     		{
+    		case VelocityEstimator.MSG_GPS_LOC:
+    			tv = (TextView) findViewById(R.id.GPSTextView);
+				tv.setText(String.format("%.1f m/s", msg.getData().getFloat( "gps_speed" ) ) );
+    			tv = (TextView) findViewById(R.id.GPSKmHTextView);
+				tv.setText(String.format("%.1f km/h", msg.getData().getFloat( "gps_speed" ) * 3.6f ) );
+    			tv = (TextView) findViewById(R.id.GPSPrecTextView);
+				tv.setText(String.format("%.3f", msg.getData().getFloat( "gps_precision" ) ) );
+    			break;
     			case VelocityEstimator.MSG_SERVER_UPDATE_MSG:
     				tv = (TextView) findViewById(R.id.TransmitterStatusTextView);
     				tv.setText( msg.getData().getString("status") );
@@ -766,13 +771,13 @@ public class GuesstimateVelocityBetter extends Activity {
     		signForward = -1;
     	}
 
-    	ed = (EditText) findViewById(R.id.editUpdateLog );
-    	int logUpdateTime = 500;
-    	try {
-    	    logUpdateTime = Integer.parseInt(ed.getText().toString());
-    	} catch(NumberFormatException nfe) {
-    	   System.out.println("Could not parse " + nfe);
-    	}    	
+//    	ed = (EditText) findViewById(R.id.editUpdateLog );
+//    	int logUpdateTime = 500;
+//    	try {
+//    	    logUpdateTime = Integer.parseInt(ed.getText().toString());
+//    	} catch(NumberFormatException nfe) {
+//    	   System.out.println("Could not parse " + nfe);
+//    	}    	
     	
     	cb = (CheckBox) findViewById(R.id.localLog);
 
@@ -801,7 +806,7 @@ public class GuesstimateVelocityBetter extends Activity {
         	b.putFloat("offsetma", offsetma );
         	b.putInt("signForward", signForward );
         	b.putBoolean( "makeLocalLog", cb.isChecked() );
-        	b.putInt("updateLogTime", logUpdateTime );
+        	//b.putInt("updateLogTime", logUpdateTime );
 	    	msg.setData(b);
 
 	    	try {
@@ -850,13 +855,13 @@ public class GuesstimateVelocityBetter extends Activity {
     	   System.out.println("Could not parse " + nfe);
     	}
 
-    	ed = (EditText) findViewById(R.id.editUpdateLog );
-    	int logUpdateTime = 500;
-    	try {
-    	    logUpdateTime = Integer.parseInt(ed.getText().toString());
-    	} catch(NumberFormatException nfe) {
-    	   System.out.println("Could not parse " + nfe);
-    	}    	
+//    	ed = (EditText) findViewById(R.id.editUpdateLog );
+//    	int logUpdateTime = 500;
+//    	try {
+//    	    logUpdateTime = Integer.parseInt(ed.getText().toString());
+//    	} catch(NumberFormatException nfe) {
+//    	   System.out.println("Could not parse " + nfe);
+//    	}    	
     	
     	CheckBox cb = (CheckBox) findViewById(R.id.localLog);
 
@@ -869,7 +874,7 @@ public class GuesstimateVelocityBetter extends Activity {
         	b.putInt("bufferSize", bufferSize );
         	b.putInt("updateServerTime", updateServerTime * 1000 );
         	b.putBoolean( "makeLocalLog", cb.isChecked() );
-        	b.putInt("updateLogTime", logUpdateTime );
+        	//b.putInt("updateLogTime", logUpdateTime );
 	    	msg.setData(b);
 
 	    	try {
@@ -1108,8 +1113,8 @@ public class GuesstimateVelocityBetter extends Activity {
     	cb.setChecked( localLog );
     	cb = (CheckBox) findViewById(R.id.signForward);
     	cb.setChecked( signForward );
-     	ed = (EditText) findViewById(R.id.editUpdateLog );
-     	ed.setText( Integer.toString( updateLogTime ) );
+     	//ed = (EditText) findViewById(R.id.editUpdateLog );
+     	//ed.setText( Integer.toString( updateLogTime ) );
     }
     
     public void storePreferences(){
@@ -1325,13 +1330,13 @@ public class GuesstimateVelocityBetter extends Activity {
     	   System.out.println("Could not parse " + nfe);
     	}
     	
-    	ed = (EditText) findViewById(R.id.editUpdateLog );
-    	int logUpdateTime = 500;
-    	try {
-    	    logUpdateTime = Integer.parseInt(ed.getText().toString());
-    	} catch(NumberFormatException nfe) {
-    	   System.out.println("Could not parse " + nfe);
-    	}    	
+//    	ed = (EditText) findViewById(R.id.editUpdateLog );
+//    	int logUpdateTime = 500;
+//    	try {
+//    	    logUpdateTime = Integer.parseInt(ed.getText().toString());
+//    	} catch(NumberFormatException nfe) {
+//    	   System.out.println("Could not parse " + nfe);
+//    	}    	
     	
     	CheckBox cb = (CheckBox) findViewById(R.id.localLog);
     	mPrefsEdit.putBoolean("localLog", cb.isChecked() );
@@ -1343,7 +1348,7 @@ public class GuesstimateVelocityBetter extends Activity {
         mPrefsEdit.putInt("client", client );
         mPrefsEdit.putInt("bufferSize", bufferSize );
         mPrefsEdit.putInt("updateServerTime", updateServerTime );
-        mPrefsEdit.putInt("updateLogTime", logUpdateTime );
+        //mPrefsEdit.putInt("updateLogTime", logUpdateTime );
 
     	mPrefsEdit.putInt("sensor", sensorid );
 	    mPrefsEdit.putInt("forward", forwardid );
@@ -1376,9 +1381,37 @@ public class GuesstimateVelocityBetter extends Activity {
     	readPreferences();
         // Prepare UI elements
         setButtonsListeners();
+        setupAlarmManager();
         
         // Enable UI buttons
         toggleUIStatus(false);
+    }
+    
+    private void setupAlarmManager(){
+    	Context context = GuesstimateVelocityBetter.this;
+        AlarmManager alarmMgr = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        
+    	  Calendar calendar = Calendar.getInstance();
+    	  Calendar calendar2 = Calendar.getInstance();
+
+    	  // 	9:00 on 
+    	  calendar.set(Calendar.HOUR_OF_DAY, 9);
+    	  calendar.set(Calendar.MINUTE, 0);
+    	  calendar.set(Calendar.SECOND, 0);
+    	  
+    	  Intent intent = new Intent(GuesstimateVelocityBetter.this, VelocityEstimator.class);
+      	  //startService(intent);
+
+    	  PendingIntent pi1 = PendingIntent.getService( context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+    	  alarmMgr.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pi1);
+
+    	  // 	21:00 off
+    	  calendar2.set(Calendar.HOUR_OF_DAY, 21);
+    	  calendar2.set(Calendar.MINUTE, 0);
+    	  calendar2.set(Calendar.SECOND, 0);
+    	  PendingIntent pi2 = PendingIntent.getBroadcast(context, 1, new Intent(context, GVBAlarmStopReceiver.class), PendingIntent.FLAG_UPDATE_CURRENT);
+    	  alarmMgr.setRepeating(AlarmManager.RTC_WAKEUP, calendar2.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pi2);      
+
     }
     
     @Override
