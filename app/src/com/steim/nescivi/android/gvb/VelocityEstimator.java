@@ -306,7 +306,7 @@ public class VelocityEstimator extends Service implements LocationListener, GpsS
 						mOffsets[0],mOffsets[1],mOffsets[2],
 						//mStillTime,
 						currentReadings[0],currentReadings[1], currentReadings[2],
-						(float) mWindowSize, mUpdateTime
+						mGps_speed, mGps_precision
 					};
 					writeLogData( logdata );
 				}
