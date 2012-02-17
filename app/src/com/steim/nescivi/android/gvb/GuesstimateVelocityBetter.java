@@ -115,8 +115,8 @@ public class GuesstimateVelocityBetter extends Activity {
     				tv.setText(String.format("%.2f m/s", msg.getData().getFloat( "offset" ) ) );
     			//	tv = (TextView) findViewById(R.id.SignTextView);
     			//	tv.setText(String.format("%.0f ", msg.getData().getFloat( "sign" ) ) );
-    				tv = (TextView) findViewById(R.id.StillTextView);
-    				tv.setText(String.format("%.0f ", msg.getData().getFloat( "stilltime" ) ) );
+    			//	tv = (TextView) findViewById(R.id.StillTextView);
+    			//	tv.setText(String.format("%.0f ", msg.getData().getFloat( "stilltime" ) ) );
     				/*
     				float [] logdata = { 
         					(float) msg.getData().getInt( "motion" ),
@@ -910,8 +910,8 @@ public class GuesstimateVelocityBetter extends Activity {
     		set_update_server();
 			*/
     		
-    		send_server_settings();
-    		send_estimate_settings();
+    		//send_server_settings();
+    		//send_estimate_settings();
 
     		
     		/*
@@ -969,7 +969,9 @@ public class GuesstimateVelocityBetter extends Activity {
     }
         
     public void readPreferences(){
-    	 mPrefs = getPreferences( MODE_PRIVATE );    	 
+    	
+    	//  	 mPrefs = getPreferences( MODE_PRIVATE );
+    	 mPrefs = getSharedPreferences( "GuesstimateVelocityBetterPrefs", MODE_PRIVATE );
 
     	 String host = mPrefs.getString("host", "82.161.162.51" );
        	 int port = mPrefs.getInt("port", 5858 );
@@ -1429,8 +1431,8 @@ public class GuesstimateVelocityBetter extends Activity {
 			
 			@Override
 			public void onClick(View v) {
-				startEstimateService();
 				storePreferences();
+				startEstimateService();
 			//	createLocalLog();
 //				startTransmitterService();
 			}

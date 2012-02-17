@@ -67,9 +67,9 @@ public class VelocityTransmitter extends Service {
     			case MSG_SET_UPDATE_INTERVAL:
     				set_update_interval(msg.arg1);
     				break;
-    			case VelocityEstimator.MSG_SPEED:
-    				addData( msg.arg1 );
-    				break;
+//    			case VelocityEstimator.MSG_SPEED:
+//    				addData( msg.arg1 );
+//    				break;
     			default:
     				super.handleMessage(msg);
     		}
