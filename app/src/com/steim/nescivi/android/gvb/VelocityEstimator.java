@@ -4,13 +4,11 @@ import android.app.Service;
 
 import android.content.SharedPreferences;
 
-
 //import android.app.Activity;
-import android.os.AsyncTask;
+//import android.os.AsyncTask;
 //import android.os.Thread;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -25,10 +23,10 @@ import android.util.Log;
 //import android.os.HandlerThread;
 //import android.os.Process;
 
-import android.widget.CheckBox;
+//import android.widget.CheckBox;
 import android.widget.Toast;
 
-import java.util.Iterator;
+//import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.net.Socket;
@@ -39,34 +37,18 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.IOException;
 
-import android.hardware.SensorEventListener;
-import android.location.GpsSatellite;
-import android.location.GpsStatus;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
-import android.location.LocationProvider;
+//import android.hardware.SensorEventListener;
+
 
 
 //import com.steim.nescivi.android.gvb.VelocityTransmitter.IncomingHandler;
 
-public class VelocityEstimator extends Service implements LocationListener, GpsStatus.Listener {
+public class VelocityEstimator extends Service {
 
     private Messenger mGuiClient = null;
 //    private Messenger mTransmitService = null;
     
     private SharedPreferences mPrefs;
-    
-	private LocationManager mLocationManager;
-    private GpsStatus mGpsStatus = null;
-
-//  private float mVelocity_at_last_gps_fix;
-    private long mGps_prev_fix_time = 0;
-    private float mGps_prev_fix_accuracy = 1000.f;
-    private float mGps_precision = 0.f;
-    private float mGps_speed = 0.f;
-
-
     
 //    private Messenger mIncomingMessenger;
     
@@ -121,6 +103,8 @@ public class VelocityEstimator extends Service implements LocationListener, GpsS
 
 			
 	private SensorListener mListener;
+	private GPSListener mGPSListener;
+	
 //	private CircularFloatArrayBuffer2 mBuffer;
 	
 	// timing:
@@ -255,25 +239,21 @@ public class VelocityEstimator extends Service implements LocationListener, GpsS
     	mContext = getApplicationContext();
    // 	mRunning = false;
 
-        // Get an instance of the LocationManager (for GPS)
-        mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 
 	this.mLastTime = System.currentTimeMillis();
 	
 	// Prepare members
 	mListener = new SensorListener(this);		
+	mGPSListener = new GPSListener(this);		
 //	mBuffer = new CircularFloatArrayBuffer2( 3, this.mWindowSize );
     this.mUpdateTime = 10;
     this.mUpdateServerTime = 30000;
 	this.mUploadBuffer = new CircularStringArrayBuffer( this.mBufferSize );
-	
-	
+		
 	readPreferences();
 	startEstimation();
 	startServerAndLog();
 	
-	mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0L, 0.f, this);
-
 	Toast.makeText(mContext, "VelocityEstimator created", Toast.LENGTH_SHORT).show();
 	}
     
@@ -287,6 +267,7 @@ public class VelocityEstimator extends Service implements LocationListener, GpsS
     
     public void startEstimation(){
 		mListener.startListening( this.mType, 0, this.mForward, this.mSideways, this.mGravity, 3, this.mWindowSize );
+		mGPSListener.startListening();
 		
 		if ( mMakeLocalLog ){
 			createLocalLog();
@@ -297,6 +278,7 @@ public class VelocityEstimator extends Service implements LocationListener, GpsS
     			updateVelocityMeasurement();
 				if ( mWritingLocalLog ){
 					float [] currentReadings = mListener.getCurrentValues();
+					float [] currentGPSReadings = mGPSListener.getCurrentValues();
 					float [] logdata = { 
 						(float) mState,
 						mSpeed, mSpeed * 3.6f,
@@ -306,7 +288,7 @@ public class VelocityEstimator extends Service implements LocationListener, GpsS
 						mOffsets[0],mOffsets[1],mOffsets[2],
 						//mStillTime,
 						currentReadings[0],currentReadings[1], currentReadings[2],
-						mGps_speed, mGps_precision
+						currentGPSReadings[0],currentGPSReadings[1]
 					};
 					writeLogData( logdata );
 				}
@@ -348,6 +330,7 @@ public class VelocityEstimator extends Service implements LocationListener, GpsS
     			add_data_to_buffer();    			
 			// send messages to UI:
     			send_gui_update_msg();
+    			send_location_msg();
     		}
 		};
     	timer.scheduleAtFixedRate( mCalcTimerTask, 0, mUpdateTime );
@@ -409,6 +392,7 @@ public class VelocityEstimator extends Service implements LocationListener, GpsS
     	Toast.makeText(mContext, "VelocityEstimator stopping", Toast.LENGTH_SHORT).show();
 
     	mListener.stopListening();
+    	mGPSListener.stopListening();
     	
     	if (timer != null){
     		mCalcTimerTask.cancel();
@@ -420,29 +404,7 @@ public class VelocityEstimator extends Service implements LocationListener, GpsS
         }
 
     	closeLocalLog();
-    	unregister_GPS();
 
-    }
-
-    private void register_with_GPS()
-    {
-    	try
-    	{
-    		if(mLocationManager.addGpsStatusListener(this)) // && mLocationManager.addNmeaListener(this))
-    		{
-            	Toast.makeText(mContext, "GPS Connected", Toast.LENGTH_SHORT).show();        	        	    			
-    		}
-    	}
-    	catch (SecurityException e)
-    	{
-        	Toast.makeText(mContext, "No permission to use GPS", Toast.LENGTH_SHORT).show();        	        	    			    		
-    	}
-    }
-    
-    private void unregister_GPS()
-    {
-    	mLocationManager.removeGpsStatusListener(this);
- //   	mLocationManager.removeNmeaListener(this);
     }
 
     /*
@@ -457,98 +419,14 @@ public class VelocityEstimator extends Service implements LocationListener, GpsS
     }
     */
     
-    public void onStatusChanged(String provider, int status, Bundle extras)
+    private void send_location_msg()
     {
-    	Log.d("VelocityServie", "onStatusChanged - " + provider);
-    	
-    	switch (status)
-    	{
-    		case LocationProvider.OUT_OF_SERVICE:
-            	Toast.makeText(mContext, provider + " out of service", Toast.LENGTH_SHORT).show();
-            	break;
-    		case LocationProvider.AVAILABLE:
-            	Toast.makeText(mContext, provider + " available", Toast.LENGTH_SHORT).show();
-            	break;
-    		case LocationProvider.TEMPORARILY_UNAVAILABLE:
-            	Toast.makeText(mContext, provider + " temporarily unavailable", Toast.LENGTH_SHORT).show();
-            	break;
-    	}
-    }
-    
-    public void onProviderEnabled(String provider)
-    {
-    	Log.d("VelocityServie", "onProviderEnabled - " + provider);
-    	Toast.makeText(mContext, provider + " enabled", Toast.LENGTH_SHORT).show();
-    	register_with_GPS();
-    }
-    
-    public void onProviderDisabled(String provider)
-    {
-    	Log.d("VelocityServie", "onProviderDisabled - " + provider);
-    	Toast.makeText(mContext, provider + " disabled", Toast.LENGTH_SHORT).show();
-    	unregister_GPS();
-    }
-    
-    public void onLocationChanged(Location location)
-    {
-    	Log.d("VelocityService", "onLocationChanged");
-    
-    	long time = location.getTime();
-    	float dt = (time - mGps_prev_fix_time) / 1000.f;
-    	mGps_prev_fix_time = time;
-    	
-    	float accuracy = location.getAccuracy();
-    	mGps_precision = Math.min(8.f / (dt * (mGps_prev_fix_accuracy + accuracy)), 1.f);
-    	mGps_prev_fix_accuracy = accuracy;
-    	
-    	mGps_speed = location.getSpeed();
-    	
-//    	mVelocity_at_last_gps_fix = mVelocity_vec.mag();
-    	
-    	send_location_msg(location);    	
-    }
-    
-    public void onGpsStatusChanged(int status)
-    {
-    	Log.d("VelocityServie", "onGpsStatusChanged");
-    	mGpsStatus = mLocationManager.getGpsStatus(mGpsStatus);
-    	
-    	switch (status)
-    	{
-    		case GpsStatus.GPS_EVENT_STARTED:
-            	Toast.makeText(mContext, "GPS on", Toast.LENGTH_SHORT).show();        	        	
-    			break;
-    		case GpsStatus.GPS_EVENT_STOPPED:
-            	Toast.makeText(mContext, "GPS off", Toast.LENGTH_SHORT).show();        	        	
-    			break;
-    		case GpsStatus.GPS_EVENT_FIRST_FIX:
-            	Toast.makeText(mContext, "Have GPS fix", Toast.LENGTH_SHORT).show();        	        	
-    			break;
-    		case GpsStatus.GPS_EVENT_SATELLITE_STATUS:
-    			Iterator<GpsSatellite> sats = mGpsStatus.getSatellites().iterator();
-//    			String satlist = "GPS sats:\n";
-//    			int satcount = 0;
-    			while (sats.hasNext())
-    			{
-    				GpsSatellite sat = sats.next();
-//    				satlist += String.format("%d: %.1f\n", sat.getPrn(), sat.getSnr());
-//    				satcount++;
-    				Log.d("VelocityService", String.format("GPS sat %d: %.1f", sat.getPrn(), sat.getSnr()));
-    			}
-/*    			if (satcount > 0)
-    			{
-    				Toast.makeText(mContext, satlist, Toast.LENGTH_SHORT).show();
-    			} */
-    			break;
-    	}
-    }
-
-    private void send_location_msg(Location location)
-    {
+    	float[] gpsReadings = mGPSListener.getCurrentValues();
     	Bundle b = new Bundle();
     	Message msg = Message.obtain(null, MSG_GPS_LOC );
-    	b.putFloat("gps_precision", mGps_precision );
-    	b.putFloat("gps_speed", mGps_speed );
+    	b.putFloat("gps_speed", gpsReadings[0] );
+    	b.putFloat("gps_precision", gpsReadings[1] );
+    	msg.setData(b);
     	
     	if (mGuiClient != null)
 		{
@@ -615,7 +493,7 @@ public class VelocityEstimator extends Service implements LocationListener, GpsS
  
   /// --------- DATA UPLOADER -------------
     private String formatDate(Date date) {
-		String format = "yy-MM-dd HH.mm.ss";
+		String format = "yy-MM-dd HH:mm:ss";
 		SimpleDateFormat formatter = new SimpleDateFormat(format);
 		return formatter.format(date); 	
 	}
@@ -815,6 +693,7 @@ public class VelocityEstimator extends Service implements LocationListener, GpsS
     	Message msg = Message.obtain(null, MSG_GUI_UPDATE_MSG );
     	b.putInt("motion", mState );
     	b.putFloat("speed", mSpeed );
+    	
 		synchronized( this ){
 			b.putFloat("facc_mean", this.mCurrentStats[0][0] );
 			b.putFloat("facc_std", this.mCurrentStats[1][0]  );
