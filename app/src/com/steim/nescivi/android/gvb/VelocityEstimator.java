@@ -120,14 +120,22 @@ public class VelocityEstimator extends Service {
 	
 	private int mState = 0;
 	private float mStillTime = 0.0f;
-	
-	private float threshold_acceleration = 0.3f;
-	private float threshold_still_side = 0.1f;
-	private float threshold_still_forward = 0.1f;
-	private float threshold_still_time = 3.0f;
-	private float threshold_decel_std = 0.25f;
-	private float threshold_decel_mean = -0.5f;
-	private float threshold_steady = 0.5f;
+
+	private float threshold_still_side = 0.04f;
+	private float threshold_still_forward = 0.04f;
+
+	private float threshold_motion_side = 0.1f;
+	private float threshold_motion_forward = 0.1f;
+
+	private float threshold_acceleration_forward = 0.2f;
+	private float threshold_acceleration_mean = 0.1f;
+
+	private float threshold_deceleration_forward = 0.3f;
+	private float threshold_deceleration_mean = -0.1f;
+
+	private float speed_decay = 0.99f;
+	private float mean_weight = 0.65f;
+	private float raw_weight = 0.65f;
 	
 	// moving average for offset:
 	private float macoef = 0.99f;
@@ -168,14 +176,21 @@ public class VelocityEstimator extends Service {
     			set_forward_axis( msg.getData().getInt("forward") );
 				set_sideways_axis( msg.getData().getInt("side"));
 				set_gravity_axis( msg.getData().getInt("gravity") );
-				set_window( msg.getData().getInt("window") );
-				set_update_time(msg.getData().getInt("updateTime"));
-				set_threshold_acceleration( msg.getData().getFloat("acc") );
-				set_threshold_steady( msg.getData().getFloat("steady") );
-				set_threshold_deceleration( msg.getData().getFloat("dec1"),msg.getData().getFloat("dec2") );
-				set_threshold_still( msg.getData().getFloat("still1"), msg.getData().getFloat("still2"), msg.getData().getFloat( "stilltime") );
-				set_offset_macoef( msg.getData().getFloat("offsetma") );
-				set_sign_forward( msg.getData().getInt("signForward") );
+				mWindowSize = msg.getData().getInt("window");
+				mUpdateTime = msg.getData().getInt("updateTime");
+				threshold_acceleration_forward = msg.getData().getFloat("acceleration_forward");
+				threshold_acceleration_mean = msg.getData().getFloat("acceleration_mean");
+				threshold_deceleration_forward = msg.getData().getFloat("deceleration_forward");
+				threshold_deceleration_mean = msg.getData().getFloat("deceleration_mean");
+				threshold_still_forward = msg.getData().getFloat("still_forward");
+				threshold_still_side = msg.getData().getFloat("still_side");
+				threshold_motion_forward = msg.getData().getFloat("motion_forward");
+				threshold_motion_side = msg.getData().getFloat("motion_side");
+				mean_weight = msg.getData().getFloat("mean_weight");
+				raw_weight = msg.getData().getFloat("raw_weight");
+				speed_decay = msg.getData().getFloat("speed_decay");
+				macoef = msg.getData().getFloat("offsetma");
+				forwardsign = msg.getData().getInt("signForward");
 				mMakeLocalLog = msg.getData().getBoolean("makeLocalLog");
 				mLogUpdateTime = msg.getData().getInt("updateLogTime");
 				startEstimation();
@@ -196,58 +211,7 @@ public class VelocityEstimator extends Service {
    			case MSG_UNREGISTER_GUI_CLIENT:
     				mGuiClient = null;
     				break;
-    				/*
-    			case MSG_REGISTER_TX_CLIENT:
-    				mTransmitService = msg.replyTo;
-    				break;
-    			case MSG_UNREGISTER_TX_CLIENT:
-    				mTransmitService = null;
-    				break;
-    				*/
-    				/*
-    			case MSG_SET_SENSOR:
-    				set_sensor(msg.arg1);
-    				break;
-    			case MSG_SET_FORWARD:
-    				set_forward_axis(msg.arg1);
-    				break;
-    			case MSG_SET_SIDEWAYS:
-    				set_sideways_axis(msg.arg1);
-    				break;
-    			case MSG_SET_GRAVITY:
-    				set_gravity_axis(msg.arg1);
-    				break;
-    			case MSG_SET_WINDOW:
-    				set_window(msg.arg1);
-    				break;
-    			case MSG_SET_UPDATETIME:
-    				set_update_time(msg.arg1);
-    				break;
-    			case MSG_SET_THRESH_ACC:
-    				set_threshold_acceleration(msg.arg1);
-    				break;
-    			case MSG_SET_THRESH_STEADY:
-    				set_threshold_steady(msg.arg1);
-    				break;
-    			case MSG_SET_THRESH_DECEL:
-    				set_threshold_deceleration(msg.arg1, msg.arg2);
-    				break;
-    			case MSG_SET_THRESH_STILL:
-    				set_threshold_still(msg.arg1, msg.arg2);
-    				break;
-    			case MSG_SET_IP:
-    				set_ip( msg.getData().getString("host") );
-    				break;
-    			case MSG_SET_PORT:
-    				set_port(msg.arg1);
-    				break;
-    			case MSG_SET_BUFFER_SIZE:
-    				set_buffer_size(msg.arg1);
-    				break;
-    			case MSG_SET_UPDATE_INTERVAL:
-    				set_update_interval(msg.arg1);
-    				break;
-    				*/
+
     			default:
     				super.handleMessage(msg);
     		}
@@ -259,15 +223,7 @@ public class VelocityEstimator extends Service {
     @Override
     public void onCreate()
     {
-    	//super.onCreate();
-    	//HandlerThread thread = new HandlerThread("ServiceVelocityEstimator", Process.THREAD_PRIORITY_BACKGROUND);
-        //thread.start();
-        
-        // Get the HandlerThread's Looper and use it for our Handler 
-        //mServiceLooper = thread.getLooper();
-        //mServiceHandler = new IncomingHandler(mServiceLooper);
-    	//mIncomingMessenger = new Messenger( mServiceHandler );
-        
+    	//super.onCreate();        
     	Log.d("VelocityEstimator", "onCreate");
     	mContext = getApplicationContext();
    // 	mRunning = false;
@@ -356,10 +312,6 @@ public class VelocityEstimator extends Service {
     			add_data_to_buffer();    			
 			// send messages to UI:
     			send_gui_update_msg();
-    		//	send_speed_msg();
-    		//	send_forward_accel_msg();
-    		//	send_sideways_accel_msg();
-    		//	send_gravity_accel_msg();
     		}
 		};
     	timer.scheduleAtFixedRate( mCalcTimerTask, 0, mUpdateTime );
@@ -450,7 +402,7 @@ public class VelocityEstimator extends Service {
     	String [] currentVals = new String[2];
     	Date now = new Date();
     	currentVals[0] = formatDate( now );
-    	currentVals[1] = String.format("%.2f", mSpeed * 3.6f );
+    	currentVals[1] = String.format("%.3f", Math.max( mSpeed * 3.6f, 0. )  );
     	mUploadBuffer.add( currentVals );
     }
 
@@ -531,30 +483,32 @@ public class VelocityEstimator extends Service {
     
     /// --------- END DATA UPLOADER -------------
 
-    private void set_sign_forward( int sign ){    	
-    	this.forwardsign = (float) sign;
-    }
-
-    private void set_window( int windowsize ){
-    	/*
-    	if ( this.mWindowSize != windowsize ){
-        	mBuffer = null;
-        	mBuffer = new CircularFloatArrayBuffer2( 3, windowsize );    		
-    	}
-    	*/
-    	this.mWindowSize = windowsize;
-    }
-
-    private void set_update_time( int updtime ){
-    	/*
-    	if ( this.mUpdateTime != updtime ){
-    		mCalcTimerTask.cancel();
-    		timer.scheduleAtFixedRate( mCalcTimerTask, 0, updtime );
-    	}
-    	*/
-    	this.mUpdateTime = updtime;
-    }
-
+//
+//    private void set_sign_forward( int sign ){    	
+//    	this.forwardsign = (float) sign;
+//    }
+//
+//    private void set_window( int windowsize ){
+//    	/*
+//    	if ( this.mWindowSize != windowsize ){
+//        	mBuffer = null;
+//        	mBuffer = new CircularFloatArrayBuffer2( 3, windowsize );    		
+//    	}
+//    	*/
+//    	this.mWindowSize = windowsize;
+//    }
+//
+//    private void set_update_time( int updtime ){
+//    	/*
+//    	if ( this.mUpdateTime != updtime ){
+//    		mCalcTimerTask.cancel();
+//    		timer.scheduleAtFixedRate( mCalcTimerTask, 0, updtime );
+//    	}
+//    	*/
+//    	this.mUpdateTime = updtime;
+//    }
+//
+    
     private void set_sensor( int newsensor ){
     	if ( this.mType != newsensor ){
     		mListener.changeListening( newsensor, 0 );
@@ -580,28 +534,28 @@ public class VelocityEstimator extends Service {
     	}
     }
     
-    private void set_threshold_acceleration( float newth ){
-    	threshold_acceleration = newth;
-    }
-
-    private void set_threshold_steady( float newth ){
-    	threshold_steady = newth;
-    }
-    
-    private void set_threshold_deceleration( float newth1, float newth2 ){
-    	threshold_decel_std = newth1;
-    	threshold_decel_mean = newth2;
-    }
-
-    private void set_threshold_still( float newth1, float newth2, float newth3 ){
-    	threshold_still_side = newth1;
-    	threshold_still_forward = newth2;
-    	threshold_still_time = newth3;
-    }
-
-    private void set_offset_macoef( float newth1 ){
-    	macoef = newth1;
-    }
+//    private void set_threshold_acceleration( float newth ){
+//    	threshold_acceleration = newth;
+//    }
+//
+//    private void set_threshold_steady( float newth ){
+//    	threshold_steady = newth;
+//    }
+//    
+//    private void set_threshold_deceleration( float newth1, float newth2 ){
+//    	threshold_decel_std = newth1;
+//    	threshold_decel_mean = newth2;
+//    }
+//
+//    private void set_threshold_still( float newth1, float newth2, float newth3 ){
+//    	threshold_still_side = newth1;
+//    	threshold_still_forward = newth2;
+//    	threshold_still_time = newth3;
+//    }
+//
+//    private void set_offset_macoef( float newth1 ){
+//    	macoef = newth1;
+//    }
 
     private void send_server_update_msg()
     {
@@ -729,7 +683,7 @@ public class VelocityEstimator extends Service {
 		this.mLastTime = newtime;
 				
 		// get readings
-		//float [] currentReadings = this.mListener.getCurrentValues();
+		float [] currentReadings = this.mListener.getCurrentValues();
 				
 		// put readings in circular buffer
 		//mBuffer.add( currentReadings );
@@ -742,7 +696,7 @@ public class VelocityEstimator extends Service {
 		// reset offsets when we are in still:
 		if ( this.mState == 0 ) {
 			for ( int axis = 0; axis < 3; axis++ ){
-				if ( curStats[0][axis] < 20.f ){
+				if ( curStats[0][axis] < 20.f ){ // just to make sure we're not killed by NaN's
 					this.mOffsets[axis] = this.mOffsets[axis] * macoef + curStats[0][axis] * (1-macoef);
 				}
 			}
@@ -753,7 +707,26 @@ public class VelocityEstimator extends Service {
 			curStats[0][axis] = curStats[0][axis] - this.mOffsets[axis];  
 		}
 		
+		// correct sign for forward axis
+		curStats[0][0] = curStats[0][0] * forwardsign;
+		currentReadings[0] = (currentReadings[0] - this.mOffsets[0]) * forwardsign;
+		
 		// determine state
+		
+		if ( curStats[1][0] > threshold_motion_forward && curStats[1][1] > threshold_motion_side ){
+			this.mState = 1; // moving
+		}
+		if ( curStats[1][0] < threshold_still_forward && curStats[1][1] > threshold_still_side ){
+			this.mState = 0; // still
+		}
+		if ( curStats[1][0] > threshold_acceleration_forward && curStats[0][0] > threshold_acceleration_mean ){
+			this.mState = 2; // accelerating
+		}
+		if ( curStats[1][0] > threshold_deceleration_forward && curStats[0][0] < threshold_deceleration_mean ){
+			this.mState = 3; // decelerating
+		}
+		
+		/*
 		switch (this.mState){
 			case 0: // still
 				mStillTime = 0.0f;
@@ -791,21 +764,23 @@ public class VelocityEstimator extends Service {
 				}
 			}
 		}
+		*/
 				
 		// calculate forward speed
+		if ( this.mState == 0 ){
+			this.mSpeed = this.mSpeed * speed_decay;
+		} else {
+			this.mSpeed += ( mean_weight*curStats[0][0] + raw_weight*currentReadings[0]) * this.mDeltaTime * 0.001;
+		}
+		
+		/*
 		switch (this.mState){
 		case 0: // still
-			this.mSpeed = (float) 0.0;
+			this.mSpeed = this.mSpeed * speed_decay_factor;
+	//		this.mSpeed = (float) 0.0;
 			break;
 		case 2: // accelerating
 			// set the sign of what is forward:
-			/*
-			if ( mCurrentStats[0][0] < 0 ){
-				forwardsign = -1.f;				
-			} else {
-				forwardsign = 1.f;
-			}
-			*/
 		case 1: // steady motion
 		case 3: // decelerating
 			this.mSpeed += curStats[0][0] * forwardsign * this.mDeltaTime * 0.001;
@@ -813,7 +788,7 @@ public class VelocityEstimator extends Service {
 		default:
 			break;
 		}
-		
+		*/
 		synchronized( this ){
 			for ( int axis = 0; axis < 3; axis++ ){
 				mCurrentStats[0][axis] = curStats[0][axis];
@@ -898,45 +873,6 @@ public class VelocityEstimator extends Service {
     	}
     	mWritingLocalLog = false;
     }
-
-	
-    /*
-	//@Override
-	public void runUploaderThread() {
-		while (myThread != null && mRunning ) {
-			send_server_update_msg();
-			
-			if ( mHost != null && mPort != 0 ){
-				try {
-    			
-					Socket s = new Socket( mHost, mPort );
-    	       
-    	        //	outgoing stream redirect to socket
-					OutputStream out = s.getOutputStream();
-    	       
-					PrintWriter output = new PrintWriter(out);
-    	        // print the circular buffer
-					output.println("Hello Android!");
-    	        
-    	        //	Close connection
-					s.close();
-    	           	       
-				} catch (UnknownHostException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				
-			}
-			
-			try {
-				Thread.sleep( mUpdateServerTime );
-			} catch (InterruptedException e) { }
-		}
-	}
-	*/
-	
 }
+
 

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<LinearLayout android:id="@+id/LinearLayout01" android:layout_width="fill_parent" android:layout_height="fill_parent" xmlns:android="http://schemas.android.com/apk/res/android" android:orientation="vertical" android:padding="10px">
+<LinearLayout android:id="@+id/LinearLayout01" android:layout_width="fill_parent" android:layout_height="fill_parent" xmlns:android="http://schemas.android.com/apk/res/android" android:orientation="vertical" android:padding="6dp">
     <LinearLayout android:id="@+id/LinearLayout02" android:layout_width="fill_parent" android:layout_height="wrap_content" android:orientation="vertical">
       
 	  <TextView android:textAppearance="?android:attr/textAppearanceLarge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/MotionStatusTextView" android:text="Still" android:gravity="center_vertical|center_horizontal"></TextView>
-      <TableLayout android:id="@+id/LinearLayout04" android:layout_width="fill_parent" android:layout_height="wrap_content" android:stretchColumns="1" android:padding="10px">
+      <TableLayout android:id="@+id/LinearLayout04" android:layout_width="fill_parent" android:layout_height="wrap_content" android:stretchColumns="1" android:padding="6dp">
 	<TableRow>
 	  <TextView android:textAppearance="?android:attr/textAppearanceLarge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/VelocityStatusLabelTextView" android:text="Velocity  "></TextView>
 	  <TextView android:textAppearance="?android:attr/textAppearanceLarge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/VelocityStatusTextView" android:text="0.0 m/s"></TextView>
@@ -47,10 +47,10 @@
 
         <LinearLayout android:id="@+id/LinearLayout05" android:layout_width="fill_parent" android:layout_height="wrap_content" android:orientation="vertical">
 	
-            <TableLayout android:id="@+id/TableLayout2" android:layout_width="fill_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:padding="10px">
+            <TableLayout android:id="@+id/TableLayout2" android:layout_width="fill_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:padding="6dp">
             <TableRow>
-      <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/EstimatorStatusTextView" android:text="Not running" android:gravity="center_vertical|center_horizontal" android:padding="10px"></TextView>
-      <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/TransmitterStatusTextView" android:text="Not running" android:gravity="center_vertical|center_horizontal" android:padding="10px"></TextView>
+      <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/EstimatorStatusTextView" android:text="Not running" android:gravity="center_vertical|center_horizontal" android:padding="6dp"></TextView>
+      <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/TransmitterStatusTextView" android:text="Not running" android:gravity="center_vertical|center_horizontal" android:padding="6dp"></TextView>
       </TableRow>
       <TableRow>
 		<Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Start estimating" android:id="@+id/StartButton"></Button>
@@ -108,40 +108,57 @@
 	    <TextView android:textAppearance="?android:attr/textAppearanceLarge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/ThresholdLabelTextView" android:text="Thresholds" android:layout_span="2"></TextView>
 	  </TableRow>            
 	  <TableRow>
-	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/AccelLabelTextView" android:text="Acceleration"></TextView>
-	    <EditText android:id="@+id/acceleration" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.3">
+	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/Still1LabelTextView" android:text="Still forward"></TextView>
+	    <EditText android:id="@+id/still_forward" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.04">
 	    </EditText>
-	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/SteadyLabelTextView" android:text="Steady"></TextView>
-	    <EditText android:id="@+id/steady" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.2"></EditText>
-	  </TableRow>
-	  <TableRow>
-	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/Decel1LabelTextView" android:text="Decel std"></TextView>
-	    <EditText android:id="@+id/decelThresS" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.25">
-	    </EditText>
-	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/Decel2LabelTextView" android:text="Decel mean"></TextView>
-	    <EditText android:id="@+id/decelThresM" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="-0.5">
-	    </EditText>
-	  </TableRow>
-	  <TableRow>
-	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/Still1LabelTextView" android:text="Still sid"></TextView>
-	    <EditText android:id="@+id/stillThres1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.1">
-	    </EditText>
-	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/Still2LabelTextView" android:text="Still for"></TextView>
-	  <EditText android:id="@+id/stillThres2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.1">
+	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/Still2LabelTextView" android:text="Still side"></TextView>
+	  <EditText android:id="@+id/still_side" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.04">
 	  </EditText>
 	</TableRow>
 	  <TableRow>
-	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/Still1LabelTextView" android:text="Still time"></TextView>
-	    <EditText android:id="@+id/stillThresTime" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="3.0">
+	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/Motion1LabelTextView" android:text="Motion forward"></TextView>
+	    <EditText android:id="@+id/motion_forward" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.1">
 	    </EditText>
-	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/Still1LabelTextView" android:text="Offset MA"></TextView>
-	    <EditText android:id="@+id/offsetMA" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.95">
+	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/Motion2LabelTextView" android:text="Motion side"></TextView>
+	  <EditText android:id="@+id/motion_side" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.1">
+	  </EditText>
+	</TableRow>
+	  	  <TableRow>
+	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/AccelLabelTextView" android:text="Accel std"></TextView>
+	    <EditText android:id="@+id/acceleration_forward" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.2">
 	    </EditText>
-	    	</TableRow>
+	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/Accel2LabelTextView" android:text="Accel mean"></TextView>
+	    <EditText android:id="@+id/acceleration_mean" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.3">
+	    </EditText>	    
+	  </TableRow>
+	  <TableRow>
+	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/Decel1LabelTextView" android:text="Decel std"></TextView>
+	    <EditText android:id="@+id/deceleration_forward" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.3">
+	    </EditText>
+	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/Decel2LabelTextView" android:text="Decel mean"></TextView>
+	    <EditText android:id="@+id/deceleration_mean" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="-0.3">
+	    </EditText>
+	  </TableRow>
+	  	  <TableRow>
+	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/MeanWLabelTextView" android:text="Mean weight"></TextView>
+	    <EditText android:id="@+id/mean_weight" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.65">
+	    </EditText>
+	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/RawWLabelTextView" android:text="Raw weight"></TextView>
+	    <EditText android:id="@+id/raw_weight" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.35">
+	    </EditText>
+	    	    	</TableRow>
+	  	  <TableRow>
+	    	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/OMALabelTextView" android:text="Offset MA"></TextView>
+	    <EditText android:id="@+id/offsetMA" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.99">
+	    </EditText>
+	    	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/SPDLabelTextView" android:text="Speed decay"></TextView>
+	    <EditText android:id="@+id/speed_decay" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.99">
+	    </EditText>
+	    	    	</TableRow>
 	  	  </TableLayout>
 
 	<TextView android:textAppearance="?android:attr/textAppearanceLarge" android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/SettingLabelTextView" android:text="SERVER" android:gravity="center_vertical|center_horizontal"></TextView>
-	<TableLayout android:id="@+id/TableLayout2" android:layout_width="fill_parent" android:layout_height="wrap_content" android:stretchColumns="1">
+	<TableLayout android:id="@+id/TableLayout3" android:layout_width="fill_parent" android:layout_height="wrap_content" android:stretchColumns="1">
 	  <TableRow>
 	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/HostLabelTextView" android:text="Host"></TextView>
 	    <EditText android:id="@+id/editHost" android:layout_width="wrap_content" android:layout_height="wrap_content" android:inputType="text" android:layout_weight="1" android:text="192.168.1.23" ></EditText>  
@@ -149,7 +166,7 @@
    	  <TableRow>
 	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/PortLabelTextView" android:text="Port"></TextView>
 	      <EditText android:id="@+id/editPort" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="5858" ></EditText>
-	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/PortLabelTextView" android:text="ClientID"></TextView>
+	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/ClientLabelTextView" android:text="ClientID"></TextView>
 	      <EditText android:id="@+id/editClient" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="1" ></EditText>
 	      	  </TableRow>
    	    

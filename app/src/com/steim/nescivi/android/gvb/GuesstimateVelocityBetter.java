@@ -644,69 +644,100 @@ public class GuesstimateVelocityBetter extends Activity {
     	}
     	
 
-    	EditText ed = (EditText) findViewById(R.id.acceleration);
-    	
-    	float acc = 0.3f;
-    	
-    	try {
-    	    acc = Float.parseFloat(ed.getText().toString());
-    	} catch(NumberFormatException nfe) {
-    	   System.out.println("Could not parse " + nfe);
-    	} 
-
-		ed = (EditText) findViewById(R.id.steady);
-    	float steady = 0.5f;
+    	EditText ed = (EditText) findViewById(R.id.acceleration_forward);    	
+    	float acc_forward = 0.2f;
     	
     	try {
-    	    steady = Float.parseFloat(ed.getText().toString());
+    	    acc_forward = Float.parseFloat(ed.getText().toString());
     	} catch(NumberFormatException nfe) {
     	   System.out.println("Could not parse " + nfe);
     	} 
-
-    	ed = (EditText) findViewById(R.id.decelThresS);
-    	float dec1 = 0.3f;
-    	try {
-    	    dec1 = Float.parseFloat(ed.getText().toString());
-    	} catch(NumberFormatException nfe) {
-    	   System.out.println("Could not parse " + nfe);
-    	} 
-
-    	ed = (EditText) findViewById(R.id.decelThresM);
-    	float dec2 = 0.3f;
-    	try {
-    	    dec2 = Float.parseFloat(ed.getText().toString());
-    	} catch(NumberFormatException nfe) {
-    	   System.out.println("Could not parse " + nfe);
-    	}
+    	ed = (EditText) findViewById(R.id.acceleration_mean);    	
+    	float acc_mean = 0.1f;
     	
-    	ed = (EditText) findViewById(R.id.stillThres1);
-    	float still1 = 0.3f;
     	try {
-    	    still1 = Float.parseFloat(ed.getText().toString());
+    	    acc_mean = Float.parseFloat(ed.getText().toString());
     	} catch(NumberFormatException nfe) {
     	   System.out.println("Could not parse " + nfe);
     	} 
 
-    	ed = (EditText) findViewById(R.id.stillThres2);
-    	float still2 = 0.3f;
+    	ed = (EditText) findViewById(R.id.deceleration_forward);    	
+    	float dec_forward = 0.3f;
+    	
     	try {
-    	    still2 = Float.parseFloat(ed.getText().toString());
+    	    dec_forward = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+    	ed = (EditText) findViewById(R.id.deceleration_mean);    	
+    	float dec_mean = -0.1f;
+    	
+    	try {
+    	    dec_mean = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+    	
+    	ed = (EditText) findViewById(R.id.still_forward);
+    	float still_forward = 0.04f;
+    	try {
+    	    still_forward = Float.parseFloat(ed.getText().toString());
     	} catch(NumberFormatException nfe) {
     	   System.out.println("Could not parse " + nfe);
     	} 
 
-    	ed = (EditText) findViewById(R.id.stillThresTime);
-    	float stilltime = 3.0f;
+    	ed = (EditText) findViewById(R.id.still_side);
+    	float still_side = 0.04f;
     	try {
-    	    stilltime = Float.parseFloat(ed.getText().toString());
+    	    still_side = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
+    	ed = (EditText) findViewById(R.id.motion_forward);
+    	float motion_forward = 0.1f;
+    	try {
+    	    motion_forward = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
+    	ed = (EditText) findViewById(R.id.motion_side);
+    	float motion_side = 0.1f;
+    	try {
+    	    motion_side = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
+    	ed = (EditText) findViewById(R.id.speed_decay);
+    	float speed_decay = 0.99f;
+    	try {
+    		speed_decay = Float.parseFloat(ed.getText().toString());
     	} catch(NumberFormatException nfe) {
     	   System.out.println("Could not parse " + nfe);
     	} 
 
     	ed = (EditText) findViewById(R.id.offsetMA);
-    	float offsetma = 0.95f;
+    	float offsetma = 0.99f;
     	try {
     	    offsetma = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
+    	ed = (EditText) findViewById(R.id.mean_weight);
+    	float mean_weight = 0.65f;
+    	try {
+    		mean_weight = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
+    	ed = (EditText) findViewById(R.id.raw_weight);
+    	float raw_weight = 0.35f;
+    	try {
+    		raw_weight = Float.parseFloat(ed.getText().toString());
     	} catch(NumberFormatException nfe) {
     	   System.out.println("Could not parse " + nfe);
     	} 
@@ -754,13 +785,19 @@ public class GuesstimateVelocityBetter extends Activity {
 	    	b.putInt("gravity", gravityid );
 	    	b.putInt("window", window );
 	    	b.putInt("updateTime", updateTime );
-	    	b.putFloat("acc", acc );
-	    	b.putFloat("steady", steady );
-        	b.putFloat("dec1", dec1 );
-        	b.putFloat("dec2", dec2 );
-        	b.putFloat("still1", still1 );
-        	b.putFloat("still2", still2 );
-        	b.putFloat("stilltime", stilltime );
+        	
+        	b.putFloat("acceleration_forward", acc_forward );
+        	b.putFloat("acceleration_mean", acc_mean );
+        	b.putFloat("deceleration_forward", dec_forward );
+        	b.putFloat("deceleration_mean", dec_mean );
+        	b.putFloat("still_forward", still_forward );
+        	b.putFloat("still_side", still_side );
+        	b.putFloat("motion_forward", motion_forward );
+        	b.putFloat("motion_side", motion_side );
+	    	b.putFloat("mean_weight", mean_weight );
+	    	b.putFloat("raw_weight", raw_weight );
+	    	b.putFloat("speed_decay", speed_decay );
+        	        	        	
         	b.putFloat("offsetma", offsetma );
         	b.putInt("signForward", signForward );
         	b.putBoolean( "makeLocalLog", cb.isChecked() );
@@ -883,16 +920,12 @@ public class GuesstimateVelocityBetter extends Activity {
 		*/
 
     		Toast.makeText(GuesstimateVelocityBetter.this, "connected to VelocityEstimator", Toast.LENGTH_SHORT).show();
-    		TextView tv1 = (TextView) findViewById(R.id.EstimatorStatusTextView);
-		tv1.setText(String.format("Estimation running"));
     	}
     	
     	public void onServiceDisconnected(ComponentName class_name)
     	{
     		mVelService = null;
     		Toast.makeText(GuesstimateVelocityBetter.this, "disconnected from VelocityEstimator", Toast.LENGTH_SHORT).show();
-    		TextView tv1 = (TextView) findViewById(R.id.EstimatorStatusTextView);
-		tv1.setText(String.format("Estimation not running"));
     	}
     };
 
@@ -951,14 +984,22 @@ public class GuesstimateVelocityBetter extends Activity {
  	     int gravityid = mPrefs.getInt("gravity", 2 );
  	     int window = mPrefs.getInt("window", 200 );
  	     int updateTime = mPrefs.getInt("updateTime", 10 );
- 	     float acc = mPrefs.getFloat("acc", 0.3f );
- 	     float steady = mPrefs.getFloat("steady", 0.2f );
-         float dec1 = mPrefs.getFloat("dec1", 0.25f );
-         float dec2 = mPrefs.getFloat("dec2", -0.5f );
-         float still1 = mPrefs.getFloat("still1", 0.1f );
-         float still2 = mPrefs.getFloat("still2", 0.1f );
-         float stilltime = mPrefs.getFloat("stilltime", 3.0f );
-         float offsetma = mPrefs.getFloat("offsetma", 0.95f );
+ 	     
+ 	     float acc_forward = mPrefs.getFloat("acceleration_forward", 0.2f );
+ 	     float acc_mean = mPrefs.getFloat("acceleration_mean", 0.1f );
+ 	     float dec_forward = mPrefs.getFloat("deceleration_forward", 0.3f );
+ 	     float dec_mean = mPrefs.getFloat("deceleration_mean", -0.1f );
+         float still_forward = mPrefs.getFloat("still_forward", 0.04f );
+         float still_side = mPrefs.getFloat("still_side", 0.04f );
+         float motion_forward = mPrefs.getFloat("motion_forward", 0.1f );
+         float motion_side = mPrefs.getFloat("motion_side", 0.1f );
+
+ 	     float mean_weight = mPrefs.getFloat("mean_weight", 0.65f );
+ 	     float raw_weight = mPrefs.getFloat("raw_weight", 0.35f );
+ 	     
+         float speed_decay = mPrefs.getFloat("speed_decay", 0.99f );
+         float offsetma = mPrefs.getFloat("offsetma", 0.99f );
+         
          boolean localLog = mPrefs.getBoolean( "localLog", false );
          boolean signForward = mPrefs.getBoolean( "signForward", false );
          
@@ -1017,22 +1058,32 @@ public class GuesstimateVelocityBetter extends Activity {
  			break;
      	}
 
-     	EditText ed = (EditText) findViewById(R.id.acceleration);
-     	ed.setText( Float.toString( acc ) );
-     	 
- 		ed = (EditText) findViewById(R.id.steady);
- 		ed.setText( Float.toString(  steady ) );
+     	EditText ed = (EditText) findViewById(R.id.acceleration_forward);
+     	ed.setText( Float.toString( acc_forward ) );
+     	ed = (EditText) findViewById(R.id.acceleration_mean);
+     	ed.setText( Float.toString( acc_mean ) );     	      	
+     	ed = (EditText) findViewById(R.id.deceleration_forward);
+     	ed.setText( Float.toString( dec_forward ) );
+     	ed = (EditText) findViewById(R.id.deceleration_mean);
+     	ed.setText( Float.toString( dec_mean ) );
      	
-     	ed = (EditText) findViewById(R.id.decelThresS);
-     	ed.setText( Float.toString(  dec1 ) );
-     	ed = (EditText) findViewById(R.id.decelThresM);
-     	ed.setText( Float.toString(  dec2 ) );     	
-     	ed = (EditText) findViewById(R.id.stillThres1);
-     	ed.setText( Float.toString(  still1 ) );
-     	ed = (EditText) findViewById(R.id.stillThres2);
-     	ed.setText( Float.toString(  still2) );
-     	ed = (EditText) findViewById(R.id.stillThresTime);
-     	ed.setText( Float.toString(  stilltime ) );
+     	ed = (EditText) findViewById(R.id.still_forward);
+     	ed.setText( Float.toString( still_forward ) );
+     	ed = (EditText) findViewById(R.id.still_side);
+     	ed.setText( Float.toString( still_side) );
+     	ed = (EditText) findViewById(R.id.motion_forward);
+     	ed.setText( Float.toString( motion_forward ) );
+     	ed = (EditText) findViewById(R.id.motion_side);
+     	ed.setText( Float.toString( motion_side ) );
+     	
+
+     	ed = (EditText) findViewById(R.id.mean_weight );
+     	ed.setText( Float.toString( mean_weight ) );
+     	ed = (EditText) findViewById(R.id.raw_weight );
+     	ed.setText( Float.toString( raw_weight ) );
+     	
+     	ed = (EditText) findViewById(R.id.speed_decay );
+     	ed.setText( Float.toString(  speed_decay ) );
      	ed = (EditText) findViewById(R.id.offsetMA);
      	ed.setText( Float.toString(  offsetma ) );
      	ed = (EditText) findViewById(R.id.editWindow);
@@ -1118,70 +1169,102 @@ public class GuesstimateVelocityBetter extends Activity {
     			sideid = 2;
     			break;
     	}
-    	
 
-    	EditText ed = (EditText) findViewById(R.id.acceleration);
-    	float acc = 0.3f;
     	
-    	try {
-    	    acc = Float.parseFloat(ed.getText().toString());
-    	} catch(NumberFormatException nfe) {
-    	   System.out.println("Could not parse " + nfe);
-    	} 
-
-		ed = (EditText) findViewById(R.id.steady);
-    	float steady = 0.5f;
+    	EditText ed = (EditText) findViewById(R.id.acceleration_forward);    	
+    	float acc_forward = 0.2f;
     	
     	try {
-    	    steady = Float.parseFloat(ed.getText().toString());
+    	    acc_forward = Float.parseFloat(ed.getText().toString());
     	} catch(NumberFormatException nfe) {
     	   System.out.println("Could not parse " + nfe);
     	} 
-
-    	ed = (EditText) findViewById(R.id.decelThresS);
-    	float dec1 = 0.3f;
-    	try {
-    	    dec1 = Float.parseFloat(ed.getText().toString());
-    	} catch(NumberFormatException nfe) {
-    	   System.out.println("Could not parse " + nfe);
-    	} 
-
-    	ed = (EditText) findViewById(R.id.decelThresM);
-    	float dec2 = 0.3f;
-    	try {
-    	    dec2 = Float.parseFloat(ed.getText().toString());
-    	} catch(NumberFormatException nfe) {
-    	   System.out.println("Could not parse " + nfe);
-    	}
+    	ed = (EditText) findViewById(R.id.acceleration_mean);    	
+    	float acc_mean = 0.1f;
     	
-    	ed = (EditText) findViewById(R.id.stillThres1);
-    	float still1 = 0.3f;
     	try {
-    	    still1 = Float.parseFloat(ed.getText().toString());
+    	    acc_mean = Float.parseFloat(ed.getText().toString());
     	} catch(NumberFormatException nfe) {
     	   System.out.println("Could not parse " + nfe);
     	} 
 
-    	ed = (EditText) findViewById(R.id.stillThres2);
-    	float still2 = 0.3f;
+    	ed = (EditText) findViewById(R.id.deceleration_forward);    	
+    	float dec_forward = 0.3f;
+    	
     	try {
-    	    still2 = Float.parseFloat(ed.getText().toString());
+    	    dec_forward = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+    	ed = (EditText) findViewById(R.id.deceleration_mean);    	
+    	float dec_mean = -0.1f;
+    	
+    	try {
+    	    dec_mean = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+    	
+    	ed = (EditText) findViewById(R.id.still_forward);
+    	float still_forward = 0.04f;
+    	try {
+    	    still_forward = Float.parseFloat(ed.getText().toString());
     	} catch(NumberFormatException nfe) {
     	   System.out.println("Could not parse " + nfe);
     	} 
 
-    	ed = (EditText) findViewById(R.id.stillThresTime);
-    	float stilltime = 3.0f;
+    	ed = (EditText) findViewById(R.id.still_side);
+    	float still_side = 0.04f;
     	try {
-    	    stilltime = Float.parseFloat(ed.getText().toString());
+    	    still_side = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
+    	ed = (EditText) findViewById(R.id.motion_forward);
+    	float motion_forward = 0.1f;
+    	try {
+    	    motion_forward = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
+    	ed = (EditText) findViewById(R.id.motion_side);
+    	float motion_side = 0.1f;
+    	try {
+    	    motion_side = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
+    	ed = (EditText) findViewById(R.id.speed_decay);
+    	float speed_decay = 0.99f;
+    	try {
+    		speed_decay = Float.parseFloat(ed.getText().toString());
     	} catch(NumberFormatException nfe) {
     	   System.out.println("Could not parse " + nfe);
     	} 
 
     	ed = (EditText) findViewById(R.id.offsetMA);
-    	float offsetma = 0.95f;
+    	float offsetma = 0.99f;
     	try {
     	    offsetma = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
+    	ed = (EditText) findViewById(R.id.mean_weight);
+    	float mean_weight = 0.65f;
+    	try {
+    		mean_weight = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
+    	ed = (EditText) findViewById(R.id.raw_weight);
+    	float raw_weight = 0.35f;
+    	try {
+    		raw_weight = Float.parseFloat(ed.getText().toString());
     	} catch(NumberFormatException nfe) {
     	   System.out.println("Could not parse " + nfe);
     	} 
@@ -1266,13 +1349,18 @@ public class GuesstimateVelocityBetter extends Activity {
 	    mPrefsEdit.putInt("gravity", gravityid );
 	    mPrefsEdit.putInt("window", window );
 	    mPrefsEdit.putInt("updateTime", updateTime );
-	    mPrefsEdit.putFloat("acc", acc );
-	    mPrefsEdit.putFloat("steady", steady );
-        mPrefsEdit.putFloat("dec1", dec1 );
-        mPrefsEdit.putFloat("dec2", dec2 );
-        mPrefsEdit.putFloat("still1", still1 );
-        mPrefsEdit.putFloat("still2", still2 );
-        mPrefsEdit.putFloat("stilltime", stilltime );
+	    
+	    mPrefsEdit.putFloat("acceleration_forward", acc_forward );
+	    mPrefsEdit.putFloat("acceleration_mean", acc_mean );
+	    mPrefsEdit.putFloat("deceleration_forward", dec_forward );
+	    mPrefsEdit.putFloat("deceleration_mean", dec_mean );
+	    mPrefsEdit.putFloat("speed_decay", speed_decay );
+        mPrefsEdit.putFloat("still_forward", still_forward );
+        mPrefsEdit.putFloat("still_side", still_side );
+        mPrefsEdit.putFloat("motion_forward", motion_forward );
+        mPrefsEdit.putFloat("motion_side", motion_side );
+        mPrefsEdit.putFloat("mean_weight", mean_weight );
+        mPrefsEdit.putFloat("raw_weight", raw_weight );
         mPrefsEdit.putFloat("offsetma", offsetma );
 	    
     	
@@ -1304,7 +1392,10 @@ public class GuesstimateVelocityBetter extends Activity {
         super.onResume();
         if (register_with_VelocityService())
         {
-    		Toast.makeText(GuesstimateVelocityBetter.this, "VelocityEstimator connected", Toast.LENGTH_SHORT).show();	
+    		Toast.makeText(GuesstimateVelocityBetter.this, "VelocityEstimator connected", Toast.LENGTH_SHORT).show();
+    		toggleUIStatus(true);
+        } else {
+        	toggleUIStatus(false);
         }
         /*
         if (register_with_TransmitterService())
@@ -1319,7 +1410,7 @@ public class GuesstimateVelocityBetter extends Activity {
         super.onPause();
         if (unregister_from_VelocityService())
         {
-    		Toast.makeText(GuesstimateVelocityBetter.this, "VelocityEstimator disconnected", Toast.LENGTH_SHORT).show();	
+    		Toast.makeText(GuesstimateVelocityBetter.this, "VelocityEstimator disconnected", Toast.LENGTH_SHORT).show();    		
         }
         /*
         if (unregister_from_TransmitterService())
@@ -1339,6 +1430,7 @@ public class GuesstimateVelocityBetter extends Activity {
 			@Override
 			public void onClick(View v) {
 				startEstimateService();
+				storePreferences();
 			//	createLocalLog();
 //				startTransmitterService();
 			}
@@ -1399,18 +1491,13 @@ public class GuesstimateVelocityBetter extends Activity {
        	findViewById(R.id.StartButton).setEnabled(!recording);
        	findViewById(R.id.StopButton).setEnabled(recording);
 
-       	// Enable or disable options
-
-       	// disable sensor select
-       	findViewById(R.id.radioAcc).setEnabled(!recording);
-       	findViewById(R.id.radioLinAcc).setEnabled(!recording);
-       	// disable window size setting
-       	findViewById(R.id.editWindow).setEnabled(!recording);
-        	        	
-       	// Change status text
-//        	TextView tv = ((TextView) findViewById(R.id.RecordingStatusTextView));
-//        	tv.setText((recording) ? R.string.status_recording_running : R.string.status_recording_stopped);
-    	}
+		TextView tv1 = (TextView) findViewById(R.id.EstimatorStatusTextView);
+		if ( recording ){
+			tv1.setText(String.format("Estimation running"));
+		} else {
+			tv1.setText(String.format("Estimation not running"));
+		}
+    }
 
     /*
     private boolean mWritingLocalLog;
