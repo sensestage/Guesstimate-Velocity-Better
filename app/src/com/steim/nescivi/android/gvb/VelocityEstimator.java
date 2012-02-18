@@ -36,6 +36,8 @@ import java.util.Date;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.IOException;
+import java.lang.Math;
+
 
 //import android.hardware.SensorEventListener;
 
@@ -71,6 +73,8 @@ public class VelocityEstimator extends Service {
     static final int MSG_GUI_UPDATE_MSG = 15;
     
     static final int MSG_GPS_LOC = 16;
+    
+    private int mWrittenLines = 0;
 
 //    static final int MSG_REGISTER_VS_SRV = 5;
 //    static final int MSG_UNREGISTER_VS_SRV = 6;
@@ -123,7 +127,10 @@ public class VelocityEstimator extends Service {
 	private float [][] mCurrentStats = { { (float) 0.0, (float) 0.0, (float) 0.0 }, { (float) 0.0, (float) 0.0, (float) 0.0 } };
 	//float stats[][] = new float[2][3];
 	
-	private float mSpeed = (float) 0.0;
+	private double mSpeed = 0.0;
+	private float[] mamean =  { (float) 0.0, (float) 0.0, (float) 0.0 };
+	private float[] mameanOff =  { (float) 0.0, (float) 0.0, (float) 0.0 };
+	private float mameanCoef = 0.99f;
 	
 	private int mForward = 1;
 	private int mSideways = 0;
@@ -199,6 +206,7 @@ public class VelocityEstimator extends Service {
 				threshold_motion_side = msg.getData().getFloat("motion_side");
 				mean_weight = msg.getData().getFloat("mean_weight");
 				raw_weight = msg.getData().getFloat("raw_weight");
+				mameanCoef = msg.getData().getFloat("mean_coef");
 				speed_decay = msg.getData().getFloat("speed_decay");
 				macoef = msg.getData().getFloat("offsetma");
 				forwardsign = msg.getData().getInt("signForward");
@@ -281,14 +289,17 @@ public class VelocityEstimator extends Service {
 					float [] currentGPSReadings = mGPSListener.getCurrentValues();
 					float [] logdata = { 
 						(float) mState,
-						mSpeed, mSpeed * 3.6f,
+						(float) mSpeed, (float) mSpeed * 3.6f,
 						mCurrentStats[0][0], mCurrentStats[1][0],
 						mCurrentStats[0][1], mCurrentStats[1][1],
 						mCurrentStats[0][2], mCurrentStats[1][2],
 						mOffsets[0],mOffsets[1],mOffsets[2],
 						//mStillTime,
 						currentReadings[0],currentReadings[1], currentReadings[2],
-						currentGPSReadings[0],currentGPSReadings[1]
+						currentGPSReadings[0],currentGPSReadings[1],
+						mameanOff[0], mamean[0],
+						mameanOff[1], mamean[1],
+						mameanOff[2], mamean[2]
 					};
 					writeLogData( logdata );
 				}
@@ -482,6 +493,8 @@ public class VelocityEstimator extends Service {
 	   	mean_weight = mPrefs.getFloat("mean_weight", 0.65f );
 	   	raw_weight = mPrefs.getFloat("raw_weight", 0.35f );
 	     
+	   	
+       	mameanCoef = mPrefs.getFloat("mean_coef", 0.99f );
        	speed_decay = mPrefs.getFloat("speed_decay", 0.99f );
        	macoef = mPrefs.getFloat("offsetma", 0.99f );
 
@@ -692,7 +705,7 @@ public class VelocityEstimator extends Service {
     	Bundle b = new Bundle();
     	Message msg = Message.obtain(null, MSG_GUI_UPDATE_MSG );
     	b.putInt("motion", mState );
-    	b.putFloat("speed", mSpeed );
+    	b.putFloat("speed", (float) mSpeed );
     	
 		synchronized( this ){
 			b.putFloat("facc_mean", this.mCurrentStats[0][0] );
@@ -798,22 +811,26 @@ public class VelocityEstimator extends Service {
 		//mCurrentStats = mBuffer.getStats();
 		float [][] curStats = this.mListener.getCurrentStats();
 		
+		for ( int axis = 0; axis < 3; axis++ ){
+			mamean[axis] = mamean[axis] * mameanCoef + curStats[0][axis]*(1.0f-mameanCoef);
+		}
+				
 		// reset offsets when we are in still:
 		if ( this.mState == 0 ) {
 			for ( int axis = 0; axis < 3; axis++ ){
 				if ( curStats[0][axis] < 20.f ){ // just to make sure we're not killed by NaN's
-					this.mOffsets[axis] = this.mOffsets[axis] * macoef + curStats[0][axis] * (1-macoef);
+					this.mOffsets[axis] = this.mOffsets[axis] * macoef + mamean[axis] * (1-macoef);
 				}
 			}
 		}
 		
 		// substract offset from mean
 		for ( int axis = 0; axis < 3; axis++ ){
-			curStats[0][axis] = curStats[0][axis] - this.mOffsets[axis];  
+			mameanOff[axis] = mamean[axis] - this.mOffsets[axis];  
 		}
 		
 		// correct sign for forward axis
-		curStats[0][0] = curStats[0][0] * forwardsign;
+		mameanOff[0] = mameanOff[0] * forwardsign;
 		currentReadings[0] = (currentReadings[0] - this.mOffsets[0]) * forwardsign;
 		
 		// determine state
@@ -824,10 +841,10 @@ public class VelocityEstimator extends Service {
 		if ( curStats[1][0] < threshold_still_forward && curStats[1][1] < threshold_still_side ){
 			this.mState = 0; // still
 		}
-		if ( curStats[1][0] > threshold_acceleration_forward && curStats[0][0] > threshold_acceleration_mean ){
+		if ( curStats[1][0] > threshold_acceleration_forward && mameanOff[0] > threshold_acceleration_mean ){
 			this.mState = 2; // accelerating
 		}
-		if ( curStats[1][0] > threshold_deceleration_forward && curStats[0][0] < threshold_deceleration_mean ){
+		if ( curStats[1][0] > threshold_deceleration_forward && mameanOff[0] < threshold_deceleration_mean ){
 			this.mState = 3; // decelerating
 		}
 		
@@ -870,13 +887,20 @@ public class VelocityEstimator extends Service {
 			}
 		}
 		*/
-				
+		
 		// calculate forward speed
+		// limit speed increase when getting faster:
+		double limiterFactor = Math.exp( -1. * this.mSpeed * Math.PI / 10. );
+		double deltaspeed = (mean_weight*mameanOff[0] + raw_weight*currentReadings[0]) * this.mDeltaTime * 0.001;
+		if ( deltaspeed > 0 ){
+			this.mSpeed +=  deltaspeed * limiterFactor;
+		} else {
+			this.mSpeed +=  deltaspeed;
+		}
 		if ( this.mState == 0 ){
 			this.mSpeed = this.mSpeed * speed_decay;
-		} else {
-			this.mSpeed += ( mean_weight*curStats[0][0] + raw_weight*currentReadings[0]) * this.mDeltaTime * 0.001;
 		}
+		this.mSpeed = Math.max( mSpeed, 0.0 );
 		
 		/*
 		switch (this.mState){
@@ -896,7 +920,8 @@ public class VelocityEstimator extends Service {
 		*/
 		synchronized( this ){
 			for ( int axis = 0; axis < 3; axis++ ){
-				mCurrentStats[0][axis] = curStats[0][axis];
+//				mCurrentStats[0][axis] = curStats[0][axis];
+				mCurrentStats[0][axis] = mameanOff[axis];
 				mCurrentStats[1][axis] = curStats[1][axis]; 
 			}
 		}
@@ -951,6 +976,7 @@ public class VelocityEstimator extends Service {
     	if ( mMakeLocalLog ){    		
     		try {
     			mLocalLog = new SensorOutputWriter(SensorOutputWriter.TYPE_GVB);
+				mWrittenLines = 0;
     			mWritingLocalLog = true;
     		} catch (StorageErrorException ex) {
     			ex.printStackTrace();
@@ -962,6 +988,11 @@ public class VelocityEstimator extends Service {
     	if ( mWritingLocalLog ){
     		try {
     			mLocalLog.writeReadings(values);
+    			mWrittenLines++;
+    			if ( mWrittenLines > 360000 ){ // start a new file each hour
+    				closeLocalLog();
+    				createLocalLog();
+    			}
     		} catch (StorageErrorException ex) {
     			ex.printStackTrace();
     		}	

@@ -2,7 +2,6 @@
 
 <LinearLayout android:id="@+id/LinearLayout01" android:layout_width="fill_parent" android:layout_height="fill_parent" xmlns:android="http://schemas.android.com/apk/res/android" android:orientation="vertical" android:padding="6dp">
     <LinearLayout android:id="@+id/LinearLayout02" android:layout_width="fill_parent" android:layout_height="wrap_content" android:orientation="vertical">
-      
 	  <TextView android:textAppearance="?android:attr/textAppearanceLarge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/MotionStatusTextView" android:text="Still" android:gravity="center_vertical|center_horizontal"></TextView>
       <TableLayout android:id="@+id/LinearLayout04" android:layout_width="fill_parent" android:layout_height="wrap_content" android:stretchColumns="1" android:padding="6dp">
 	<TableRow>
@@ -47,6 +46,7 @@
 			
 	</TableLayout>
     </LinearLayout>
+        
     
     <ScrollView android:id="@+id/ScrollView01" android:layout_width="fill_parent" android:layout_height="wrap_content">
 
@@ -160,7 +160,12 @@
 	    <EditText android:id="@+id/speed_decay" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.99">
 	    </EditText>
 	    	    	</TableRow>
-	  	  </TableLayout>
+	  	  <TableRow>
+	    	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/MMALabelTextView" android:text="Mean MA"></TextView>
+	    <EditText android:id="@+id/mean_coef" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.99">
+	    </EditText>
+	    	    	</TableRow>
+	  	  	  	  </TableLayout>
 
 	<TextView android:textAppearance="?android:attr/textAppearanceLarge" android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/SettingLabelTextView" android:text="SERVER" android:gravity="center_vertical|center_horizontal"></TextView>
 	<TableLayout android:id="@+id/TableLayout3" android:layout_width="fill_parent" android:layout_height="wrap_content" android:stretchColumns="1">

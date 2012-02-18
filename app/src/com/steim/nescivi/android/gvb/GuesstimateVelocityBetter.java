@@ -723,6 +723,14 @@ public class GuesstimateVelocityBetter extends Activity {
     	   System.out.println("Could not parse " + nfe);
     	} 
 
+    	ed = (EditText) findViewById(R.id.mean_coef);
+    	float mean_coef = 0.99f;
+    	try {
+    		mean_coef = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
     	ed = (EditText) findViewById(R.id.offsetMA);
     	float offsetma = 0.99f;
     	try {
@@ -802,6 +810,7 @@ public class GuesstimateVelocityBetter extends Activity {
 	    	b.putFloat("mean_weight", mean_weight );
 	    	b.putFloat("raw_weight", raw_weight );
 	    	b.putFloat("speed_decay", speed_decay );
+	    	b.putFloat("mean_coef", mean_coef );
         	        	        	
         	b.putFloat("offsetma", offsetma );
         	b.putInt("signForward", signForward );
@@ -1003,7 +1012,9 @@ public class GuesstimateVelocityBetter extends Activity {
 
  	     float mean_weight = mPrefs.getFloat("mean_weight", 0.65f );
  	     float raw_weight = mPrefs.getFloat("raw_weight", 0.35f );
- 	     
+
+	     float mean_coef = mPrefs.getFloat("mean_coef", 0.99f );
+
          float speed_decay = mPrefs.getFloat("speed_decay", 0.99f );
          float offsetma = mPrefs.getFloat("offsetma", 0.99f );
          
@@ -1091,6 +1102,8 @@ public class GuesstimateVelocityBetter extends Activity {
      	
      	ed = (EditText) findViewById(R.id.speed_decay );
      	ed.setText( Float.toString(  speed_decay ) );
+     	ed = (EditText) findViewById(R.id.mean_coef );
+     	ed.setText( Float.toString( mean_coef ) );
      	ed = (EditText) findViewById(R.id.offsetMA);
      	ed.setText( Float.toString(  offsetma ) );
      	ed = (EditText) findViewById(R.id.editWindow);
@@ -1251,6 +1264,13 @@ public class GuesstimateVelocityBetter extends Activity {
     	} catch(NumberFormatException nfe) {
     	   System.out.println("Could not parse " + nfe);
     	} 
+    	ed = (EditText) findViewById(R.id.mean_coef);
+    	float mean_coef = 0.99f;
+    	try {
+    		mean_coef = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
 
     	ed = (EditText) findViewById(R.id.offsetMA);
     	float offsetma = 0.99f;
@@ -1362,6 +1382,8 @@ public class GuesstimateVelocityBetter extends Activity {
 	    mPrefsEdit.putFloat("deceleration_forward", dec_forward );
 	    mPrefsEdit.putFloat("deceleration_mean", dec_mean );
 	    mPrefsEdit.putFloat("speed_decay", speed_decay );
+	    mPrefsEdit.putFloat("mean_coef", mean_coef );
+
         mPrefsEdit.putFloat("still_forward", still_forward );
         mPrefsEdit.putFloat("still_side", still_side );
         mPrefsEdit.putFloat("motion_forward", motion_forward );
