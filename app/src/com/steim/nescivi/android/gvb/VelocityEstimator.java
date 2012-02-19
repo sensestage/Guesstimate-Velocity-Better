@@ -137,6 +137,8 @@ public class VelocityEstimator extends Service {
 	private float[] mamean =  { (float) 0.0, (float) 0.0, (float) 0.0 };
 	private float[] mameanOff =  { (float) 0.0, (float) 0.0, (float) 0.0 };
 	private float mameanCoef = 0.99f;
+
+	private float[] maGrav =  { (float) 0.0, (float) 0.0, (float) 0.0 };
 	
 	private int mForward = 1;
 	private int mSideways = 0;
@@ -146,6 +148,7 @@ public class VelocityEstimator extends Service {
 	//private float mStillTime = 0.0f;
 
 	private float threshold_gravity = 0.1f;
+	private float maGravCoef = 0.95f;
 
 	private float threshold_still_side = 0.04f;
 	private float threshold_still_forward = 0.04f;
@@ -206,6 +209,7 @@ public class VelocityEstimator extends Service {
 				mWindowSize = msg.getData().getInt("window");
 				mUpdateTime = msg.getData().getInt("updateTime");
 				threshold_gravity = msg.getData().getFloat("threshold_gravity");
+				maGravCoef = msg.getData().getFloat("ma_gravity");
 				threshold_acceleration_forward = msg.getData().getFloat("acceleration_forward");
 				threshold_acceleration_mean = msg.getData().getFloat("acceleration_mean");
 				threshold_deceleration_forward = msg.getData().getFloat("deceleration_forward");
@@ -500,6 +504,7 @@ public class VelocityEstimator extends Service {
 	   	mUpdateTime = mPrefs.getInt("updateTime", 10 );
 
 	   	threshold_gravity = mPrefs.getFloat("threshold_gravity", 0.1f );
+	   	maGravCoef = mPrefs.getFloat("ma_gravity", 0.95f );
 	     
 	   	threshold_acceleration_forward = mPrefs.getFloat("acceleration_forward", 0.2f );
 	   	threshold_acceleration_mean = mPrefs.getFloat("acceleration_mean", 0.1f );
@@ -831,15 +836,30 @@ public class VelocityEstimator extends Service {
 		// put readings in circular buffer
 		//mBuffer.add( currentReadings );
 		
+		// get readings
+		float [] currentGravityReadings = this.mListener.getCurrentGravityValues();
+		
+		
 		// calculate mean and standard deviation of buffers
 		//float [][] curStats = mBuffer.getStats();
 		//mCurrentStats = mBuffer.getStats();
 		float [][] curStats = this.mListener.getCurrentStats();
 		
 		for ( int axis = 0; axis < 3; axis++ ){
+			maGrav[axis] = maGrav[axis] * maGravCoef + currentGravityReadings[axis]*(1.0f - maGravCoef);
+		}
+		
+		if ( Math.abs( mamean[2] - maGrav[2] ) > threshold_gravity ){
+			// sensor is tilted
+		//	float correctionFactor = Math.abs( mamean[2] / this.mOffsets[2] );
+		//	mamean[0] = correctionFactor * mamean[0] - this.mOffsets[0];
+			curStats[0][0] = curStats[0][0] - maGrav[0]; 
+		}
+
+		for ( int axis = 0; axis < 3; axis++ ){
 			mamean[axis] = mamean[axis] * mameanCoef + curStats[0][axis]*(1.0f-mameanCoef);
 		}
-				
+
 		// reset offsets when we are in still:
 		if ( this.mState == 0 ) {
 			for ( int axis = 0; axis < 3; axis++ ){
@@ -852,12 +872,6 @@ public class VelocityEstimator extends Service {
 		// substract offset from mean
 		for ( int axis = 0; axis < 3; axis++ ){
 			mameanOff[axis] = mamean[axis] - this.mOffsets[axis];  
-		}
-		
-		if ( Math.abs( mameanOff[2] ) > threshold_gravity ){
-			// sensor is tilted
-			float correctionFactor = mamean[2] / this.mOffsets[2];
-			mameanOff[0] = correctionFactor * mamean[0] - this.mOffsets[0];
 		}
 		
 		// correct sign for forward axis

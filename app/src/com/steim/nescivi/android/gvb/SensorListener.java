@@ -36,6 +36,7 @@ public class SensorListener implements SensorEventListener, Runnable {
 	private int mLastElementStats;
 	
 	private float [] currentValues = {(float) 0.0, (float) 0.0, (float) 0.0};
+	private float [] currentGravityValues = {(float) 0.0, (float) 0.0, (float) 0.0};
 	private float [][] currentStats = { {(float) 0.0, (float) 0.0, (float) 0.0}, {(float) 0.0, (float) 0.0, (float) 0.0} };	
 	
 //	private SensorOutputWriter mAccelerometerLog, mLinearAccelerometerLog, mOrientationLog, mMagneticLog, mGyroLog, mLightLog;
@@ -138,6 +139,18 @@ public class SensorListener implements SensorEventListener, Runnable {
 		}
 	}
 	
+	public void storeGravityValues(float readings[]) {
+		//	long newtime = System.currentTimeMillis();
+		//	this.mTimeInterval = newtime - mLastTime;
+		//	this.mLastTime = newtime;
+			synchronized ( this ){
+				this.currentGravityValues[ 0 ] = readings[ this.mForward ];
+				this.currentGravityValues[ 1 ] = readings[ this.mSideways ];
+				this.currentGravityValues[ 2 ] = readings[ this.mGravity ];
+				//mBuffer.add( currentGravityValues );			 
+			}
+		}
+	
 	float [][] getCurrentStats(){
 		float [][] curStats;
 		int lastEle;
@@ -160,6 +173,13 @@ public class SensorListener implements SensorEventListener, Runnable {
 		return vals;
 	}
 
+	float [] getCurrentGravityValues(){
+		float [] vals;
+		synchronized (this){
+			vals = this.currentGravityValues;
+		}
+		return vals;
+	}
 
 	//@Override
 	public void onSensorChanged(SensorEvent event) {
@@ -172,6 +192,10 @@ public class SensorListener implements SensorEventListener, Runnable {
 				break;
 			case Sensor.TYPE_LINEAR_ACCELERATION:
 				this.storeValues(event.values);
+			//	mLinearAccelerometerLog.writeReadings(event.values);
+				break;
+			case Sensor.TYPE_GRAVITY:
+				this.storeGravityValues(event.values);
 			//	mLinearAccelerometerLog.writeReadings(event.values);
 				break;
 			}

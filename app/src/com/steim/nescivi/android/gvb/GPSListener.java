@@ -55,7 +55,8 @@ public class GPSListener implements LocationListener, GpsStatus.Listener, Runnab
 	public void stopListening() {
 		// Unregisterlistener moved to thread
 		mRunning = false;
-		
+		unregister_GPS();
+		mLocationManager.removeUpdates(this);
 		// End recording thread
 		mThread.interrupt();
 		mThread = null;

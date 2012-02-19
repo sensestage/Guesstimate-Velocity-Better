@@ -681,6 +681,14 @@ public class GuesstimateVelocityBetter extends Activity {
     	} catch(NumberFormatException nfe) {
     	   System.out.println("Could not parse " + nfe);
     	} 
+    	ed = (EditText) findViewById(R.id.ma_gravity);    	
+    	float ma_gravity = 0.95f;
+    	
+    	try {
+    	    ma_gravity = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
     	ed = (EditText) findViewById(R.id.acceleration_mean);    	
     	float acc_mean = 0.1f;
     	
@@ -832,6 +840,7 @@ public class GuesstimateVelocityBetter extends Activity {
 	    	b.putInt("updateTime", updateTime );
         	
         	b.putFloat("threshold_gravity", thr_gravity );
+        	b.putFloat("ma_gravity", ma_gravity );
         	b.putFloat("acceleration_forward", acc_forward );
         	b.putFloat("acceleration_mean", acc_mean );
         	b.putFloat("deceleration_forward", dec_forward );
@@ -1039,6 +1048,7 @@ public class GuesstimateVelocityBetter extends Activity {
  	     int updateTime = mPrefs.getInt("updateTime", 10 );
  	     
  	     float thr_gravity = mPrefs.getFloat("threshold_gravity", 0.1f );
+ 	     float ma_gravity = mPrefs.getFloat("ma_gravity", 0.95f );
  	     float acc_forward = mPrefs.getFloat("acceleration_forward", 0.2f );
  	     float acc_mean = mPrefs.getFloat("acceleration_mean", 0.1f );
  	     float dec_forward = mPrefs.getFloat("deceleration_forward", 0.3f );
@@ -1126,6 +1136,8 @@ public class GuesstimateVelocityBetter extends Activity {
 
      	ed = (EditText) findViewById(R.id.threshold_gravity);
      	ed.setText( Float.toString( thr_gravity ) );
+     	ed = (EditText) findViewById(R.id.ma_gravity);
+     	ed.setText( Float.toString( ma_gravity ) );
      	ed = (EditText) findViewById(R.id.acceleration_forward);
      	ed.setText( Float.toString( acc_forward ) );
      	ed = (EditText) findViewById(R.id.acceleration_mean);
@@ -1256,6 +1268,14 @@ public class GuesstimateVelocityBetter extends Activity {
     	
     	try {
     	    thr_gravity = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+    	ed = (EditText) findViewById(R.id.ma_gravity);    	
+    	float ma_gravity = 0.95f;
+    	
+    	try {
+    	    ma_gravity = Float.parseFloat(ed.getText().toString());
     	} catch(NumberFormatException nfe) {
     	   System.out.println("Could not parse " + nfe);
     	} 
@@ -1445,6 +1465,7 @@ public class GuesstimateVelocityBetter extends Activity {
 	    mPrefsEdit.putInt("updateTime", updateTime );
 	    
 	    mPrefsEdit.putFloat("threshold_gravity", thr_gravity );
+	    mPrefsEdit.putFloat("ma_gravity", ma_gravity );
 	    mPrefsEdit.putFloat("acceleration_forward", acc_forward );
 	    mPrefsEdit.putFloat("acceleration_mean", acc_mean );
 	    mPrefsEdit.putFloat("deceleration_forward", dec_forward );
