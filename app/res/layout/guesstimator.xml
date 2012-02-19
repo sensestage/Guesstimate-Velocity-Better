@@ -203,7 +203,8 @@
 	<TableRow>
 	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/OffsetStatusLabelTextView" android:text="Offset"></TextView>
 	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/OffsetTextView" android:text="0.0 m/s"></TextView>
-	 	 </TableRow>
+	  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/OffsetGravTextView" android:text="0.0 m/s"></TextView>
+	  	 	 </TableRow>
 	</TableLayout>
 
       <TableLayout android:id="@+id/TableLayout5" android:layout_width="fill_parent" android:layout_height="wrap_content" android:stretchColumns="1" android:padding="6dp">		
