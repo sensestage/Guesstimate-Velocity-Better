@@ -444,7 +444,7 @@ public class VelocityEstimator extends Service {
     	float gps_weight = currentGPSReadings[1] / tot_weight;
     	float vel_weight = (float) mAccPrecision / tot_weight;
     	
-    	mSpeed = (mSpeedAccel * vel_weight) + (currentGPSReadings[1] * gps_weight); 
+    	mSpeed = (mSpeedAccel * vel_weight) + (currentGPSReadings[0] * gps_weight); 
     }
     
     
@@ -923,9 +923,9 @@ public class VelocityEstimator extends Service {
 		double limiterFactor = Math.exp( -1. * this.mSpeedAccel * Math.PI / 10. );
 		double deltaspeed = (mean_weight*mameanOff[0] + raw_weight*currentReadings[0]) * this.mDeltaTime * 0.001;
 		if ( (deltaspeed > 0.0f) && (mSpeedAccel > 15.0) ){ // only limit when above 15.0 m/s
-			this.mSpeedAccel +=  deltaspeed * limiterFactor;
+			this.mSpeedAccel += (deltaspeed * limiterFactor);
 		} else {
-			this.mSpeedAccel +=  deltaspeed;
+			this.mSpeedAccel += deltaspeed;
 		}
 		if ( this.mState == 0 ){
 			this.mSpeedAccel = this.mSpeedAccel * speed_decay;
