@@ -237,6 +237,7 @@ def openFile( filename ):
 	motions = []
 	mameans = []
 	precision = []
+	prePrecision = 1.0;
 	#mam = mplot[4][0]
 	mam = means[0][0]
 	avgspeed = []
@@ -256,7 +257,9 @@ def openFile( filename ):
 	  calculate_speed( mam, mplot[13][i], 5 )
 	  #calculate_speed( mam, mplot[13][i], 5 )
 	  ##calculate_speed( means[1][i], deltatimes[i] )
-	  precision.append( numpy.exp( - stds[0][i] * math.pi/2.0 ) )
+	  prePrecision = numpy.exp( (- stds[0][i] ) * math.pi/3.0 )
+	  #numpy.exp( -x*math.pi/3. )
+	  precision.append( prePrecision )
 	  #precision.append( numpy.exp( -max( mplot[5][i], 0. )*math.pi/2.0 ))
 	  speeds.append( speed )
 	  offsets.append( offset )
@@ -321,6 +324,7 @@ def openFile( filename ):
 	ContainerHor4(plot4,plot14,plotC3,plot26).configure_traits()
 
 	ContainerHor4(plotC3,plot24,plot21,plot25).configure_traits()
+	ContainerHor4(plotC3,plot23,plot21,plot4).configure_traits()
 
 	ContainerHor4(plot14,plotC3,plot3,plot4).configure_traits()
 	ContainerHor4(plot14,plotC3,plot21,plot4).configure_traits()
