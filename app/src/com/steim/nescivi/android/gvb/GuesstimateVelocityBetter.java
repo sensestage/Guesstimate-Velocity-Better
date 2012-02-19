@@ -24,6 +24,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.RadioGroup;
 import android.widget.RadioButton;
+import android.widget.ScrollView;
 import android.widget.EditText;
 import android.widget.CheckBox;
 import android.widget.TextView;
@@ -31,8 +32,11 @@ import android.widget.Toast;
 import android.content.SharedPreferences;
 
 import android.view.WindowManager;
+import android.view.View;
+
 
 import java.util.Calendar;
+import java.util.StringTokenizer;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -98,6 +102,12 @@ public class GuesstimateVelocityBetter extends Activity {
     			//	tv.setText(String.format("%.1f m/s", msg.arg1 / 10.f ) );
     				break;
     			case VelocityEstimator.MSG_GUI_UPDATE_MSG:
+        			tv = (TextView) findViewById(R.id.AccelSpeedTextView);
+    				tv.setText(String.format("%.1f m/s", msg.getData().getFloat( "speed_accel" ) ) );
+        			tv = (TextView) findViewById(R.id.AccelSpeedKmHTextView);
+    				tv.setText(String.format("%.1f km/h", msg.getData().getFloat( "speed_accel" ) * 3.6f ) );
+        			tv = (TextView) findViewById(R.id.AccelPrecTextView);
+    				tv.setText(String.format("%.3f", msg.getData().getFloat( "speed_accel_precision" ) ) );
     				tv = (TextView) findViewById(R.id.VelocityStatusTextView);
     				tv.setText(String.format("%.1f m/s", msg.getData().getFloat( "speed" ) ) );
     				tv = (TextView) findViewById(R.id.VelocityStatusTextView2);
@@ -175,6 +185,7 @@ public class GuesstimateVelocityBetter extends Activity {
     			default:
     				super.handleMessage(msg);
     		}
+    		toggleUIStatus( true );
     	}
     }
     
@@ -723,6 +734,14 @@ public class GuesstimateVelocityBetter extends Activity {
     	   System.out.println("Could not parse " + nfe);
     	} 
 
+    	ed = (EditText) findViewById(R.id.ma_precision);
+    	float ma_precision = 0.99f;
+    	try {
+    		ma_precision = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
+
     	ed = (EditText) findViewById(R.id.mean_coef);
     	float mean_coef = 0.99f;
     	try {
@@ -810,6 +829,7 @@ public class GuesstimateVelocityBetter extends Activity {
 	    	b.putFloat("mean_weight", mean_weight );
 	    	b.putFloat("raw_weight", raw_weight );
 	    	b.putFloat("speed_decay", speed_decay );
+	    	b.putFloat("ma_precision", ma_precision );
 	    	b.putFloat("mean_coef", mean_coef );
         	        	        	
         	b.putFloat("offsetma", offsetma );
@@ -901,6 +921,7 @@ public class GuesstimateVelocityBetter extends Activity {
     	public void onServiceConnected(ComponentName class_name, IBinder service) {
     		mVelService = new Messenger(service);
     		
+    		
     		if (!register_with_VelocityService()){
     			return;
     		}
@@ -932,13 +953,14 @@ public class GuesstimateVelocityBetter extends Activity {
     		setupBuffer();
     		setupUploader();
 		*/
-
+    	//	mBound = true;
     		Toast.makeText(GuesstimateVelocityBetter.this, "connected to VelocityEstimator", Toast.LENGTH_SHORT).show();
     	}
     	
     	public void onServiceDisconnected(ComponentName class_name)
     	{
     		mVelService = null;
+    	//	mBound = false;
     		Toast.makeText(GuesstimateVelocityBetter.this, "disconnected from VelocityEstimator", Toast.LENGTH_SHORT).show();
     	}
     };
@@ -1016,11 +1038,21 @@ public class GuesstimateVelocityBetter extends Activity {
 	     float mean_coef = mPrefs.getFloat("mean_coef", 0.99f );
 
          float speed_decay = mPrefs.getFloat("speed_decay", 0.99f );
+         float ma_precision = mPrefs.getFloat("ma_precision", 0.99f );
          float offsetma = mPrefs.getFloat("offsetma", 0.99f );
          
          boolean localLog = mPrefs.getBoolean( "localLog", false );
          boolean signForward = mPrefs.getBoolean( "signForward", false );
          
+         int hour_start = mPrefs.getInt( "start_hour", 9 );
+         int minute_start = mPrefs.getInt( "start_minute", 0 );
+         int hour_stop = mPrefs.getInt( "stop_hour", 21 );
+         int minute_stop = mPrefs.getInt( "stop_minute", 0 );
+         
+      	EditText ed = (EditText) findViewById(R.id.editStartTime);
+      	ed.setText( String.format( "%02d:%02d", hour_start, minute_start ) );
+      	ed = (EditText) findViewById(R.id.editStopTime);
+      	ed.setText( String.format( "%02d:%02d", hour_stop, minute_stop ) );
          
          RadioButton rb;
      	 switch ( sensorid  ) {
@@ -1076,7 +1108,7 @@ public class GuesstimateVelocityBetter extends Activity {
  			break;
      	}
 
-     	EditText ed = (EditText) findViewById(R.id.acceleration_forward);
+     	ed = (EditText) findViewById(R.id.acceleration_forward);
      	ed.setText( Float.toString( acc_forward ) );
      	ed = (EditText) findViewById(R.id.acceleration_mean);
      	ed.setText( Float.toString( acc_mean ) );     	      	
@@ -1102,6 +1134,8 @@ public class GuesstimateVelocityBetter extends Activity {
      	
      	ed = (EditText) findViewById(R.id.speed_decay );
      	ed.setText( Float.toString(  speed_decay ) );
+     	ed = (EditText) findViewById(R.id.ma_precision );
+     	ed.setText( Float.toString(  ma_precision ) );
      	ed = (EditText) findViewById(R.id.mean_coef );
      	ed.setText( Float.toString( mean_coef ) );
      	ed = (EditText) findViewById(R.id.offsetMA);
@@ -1264,6 +1298,13 @@ public class GuesstimateVelocityBetter extends Activity {
     	} catch(NumberFormatException nfe) {
     	   System.out.println("Could not parse " + nfe);
     	} 
+    	ed = (EditText) findViewById(R.id.ma_precision);
+    	float ma_precision = 0.99f;
+    	try {
+    		ma_precision = Float.parseFloat(ed.getText().toString());
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	} 
     	ed = (EditText) findViewById(R.id.mean_coef);
     	float mean_coef = 0.99f;
     	try {
@@ -1382,6 +1423,7 @@ public class GuesstimateVelocityBetter extends Activity {
 	    mPrefsEdit.putFloat("deceleration_forward", dec_forward );
 	    mPrefsEdit.putFloat("deceleration_mean", dec_mean );
 	    mPrefsEdit.putFloat("speed_decay", speed_decay );
+	    mPrefsEdit.putFloat("ma_precision", ma_precision );
 	    mPrefsEdit.putFloat("mean_coef", mean_coef );
 
         mPrefsEdit.putFloat("still_forward", still_forward );
@@ -1391,7 +1433,41 @@ public class GuesstimateVelocityBetter extends Activity {
         mPrefsEdit.putFloat("mean_weight", mean_weight );
         mPrefsEdit.putFloat("raw_weight", raw_weight );
         mPrefsEdit.putFloat("offsetma", offsetma );
-	    
+
+    	ed = (EditText) findViewById(R.id.editStartTime );
+    	int hour_start = 9;
+    	int minute_start = 0;
+    	try {
+    		String time = ed.getText().toString();
+    		StringTokenizer tokens = new StringTokenizer(time, ":");
+    		hour_start = Integer.parseInt( tokens.nextToken() );
+    		minute_start = Integer.parseInt( tokens.nextToken() );
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	}    	
+    	ed = (EditText) findViewById(R.id.editStopTime );
+    	int hour_stop = 21;
+    	int minute_stop = 0;
+    	try {
+    		String time = ed.getText().toString();
+    		StringTokenizer tokens = new StringTokenizer(time, ":");
+    		hour_stop = Integer.parseInt( tokens.nextToken() );
+    		minute_stop = Integer.parseInt( tokens.nextToken() );
+    	} catch(NumberFormatException nfe) {
+    	   System.out.println("Could not parse " + nfe);
+    	}    	
+
+        mPrefsEdit.putInt("start_hour", hour_start );
+        mPrefsEdit.putInt("stop_hour", hour_stop );
+        mPrefsEdit.putInt("start_minute", minute_start );
+        mPrefsEdit.putInt("stop_minute", minute_stop );
+
+//        int hour_start = mPrefs.getInt( "start_hour", 9 );
+//        int minute_start = mPrefs.getInt( "start_minute", 0 );
+//        int hour_stop = mPrefs.getInt( "stop_hour", 21 );
+//        int minute_stop = mPrefs.getInt( "stop_minute", 0 );
+
+
     	
     	mPrefsEdit.commit();
     }
@@ -1413,12 +1489,35 @@ public class GuesstimateVelocityBetter extends Activity {
     	Context context = GuesstimateVelocityBetter.this;
         AlarmManager alarmMgr = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         
-    	  Calendar calendar = Calendar.getInstance();
-    	  Calendar calendar2 = Calendar.getInstance();
+    	Calendar calendar = Calendar.getInstance();
+    	Calendar calendar2 = Calendar.getInstance();
+
+      	EditText ed = (EditText) findViewById(R.id.editStartTime );
+      	int hour_start = 9;
+      	int minute_start = 0;
+      	try {
+      		String time = ed.getText().toString();
+      		StringTokenizer tokens = new StringTokenizer(time, ":");
+      		hour_start = Integer.parseInt( tokens.nextToken() );
+      		minute_start = Integer.parseInt( tokens.nextToken() );
+      	} catch(NumberFormatException nfe) {
+      	   System.out.println("Could not parse " + nfe);
+      	}    	
+      	ed = (EditText) findViewById(R.id.editStopTime );
+      	int hour_stop = 21;
+      	int minute_stop = 0;
+      	try {
+      		String time = ed.getText().toString();
+      		StringTokenizer tokens = new StringTokenizer(time, ":");
+      		hour_stop = Integer.parseInt( tokens.nextToken() );
+      		minute_stop = Integer.parseInt( tokens.nextToken() );
+      	} catch(NumberFormatException nfe) {
+      	   System.out.println("Could not parse " + nfe);
+      	}    	
 
     	  // 	9:00 on 
-    	  calendar.set(Calendar.HOUR_OF_DAY, 9);
-    	  calendar.set(Calendar.MINUTE, 0);
+    	  calendar.set(Calendar.HOUR_OF_DAY, hour_start);
+    	  calendar.set(Calendar.MINUTE, minute_start);
     	  calendar.set(Calendar.SECOND, 0);
     	  
     	  Intent intent = new Intent(GuesstimateVelocityBetter.this, VelocityEstimator.class);
@@ -1428,8 +1527,8 @@ public class GuesstimateVelocityBetter extends Activity {
     	  alarmMgr.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pi1);
 
     	  // 	21:00 off
-    	  calendar2.set(Calendar.HOUR_OF_DAY, 21);
-    	  calendar2.set(Calendar.MINUTE, 0);
+    	  calendar2.set(Calendar.HOUR_OF_DAY, hour_stop);
+    	  calendar2.set(Calendar.MINUTE, minute_stop);
     	  calendar2.set(Calendar.SECOND, 0);
     	  PendingIntent pi2 = PendingIntent.getBroadcast(context, 1, new Intent(context, GVBAlarmStopReceiver.class), PendingIntent.FLAG_UPDATE_CURRENT);
     	  alarmMgr.setRepeating(AlarmManager.RTC_WAKEUP, calendar2.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pi2);      
@@ -1447,34 +1546,13 @@ public class GuesstimateVelocityBetter extends Activity {
     protected void onResume()
     {
         super.onResume();
-        if (register_with_VelocityService())
-        {
-    		Toast.makeText(GuesstimateVelocityBetter.this, "VelocityEstimator connected", Toast.LENGTH_SHORT).show();
-    		toggleUIStatus(true);
-        } else {
-        	toggleUIStatus(false);
-        }
-        /*
-        if (register_with_TransmitterService())
-        {
-    		Toast.makeText(GuesstimateVelocityBetter.this, "VelocityTransmitter connected", Toast.LENGTH_SHORT).show();	
-        }
-        */
+        bindEstimateService();
     }
 
     protected void onPause() 
     {
         super.onPause();
-        if (unregister_from_VelocityService())
-        {
-    		Toast.makeText(GuesstimateVelocityBetter.this, "VelocityEstimator disconnected", Toast.LENGTH_SHORT).show();    		
-        }
-        /*
-        if (unregister_from_TransmitterService())
-        {
-    		Toast.makeText(GuesstimateVelocityBetter.this, "VelocityTransmitter connected", Toast.LENGTH_SHORT).show();	
-        }
-        */
+        unbindEstimateService();
     }
  
     private void setButtonsListeners() {
@@ -1504,14 +1582,43 @@ public class GuesstimateVelocityBetter extends Activity {
 			}
 		});
     }
-    
+
+    private void bindEstimateService()
+    {
+    	Intent intent = new Intent(GuesstimateVelocityBetter.this, VelocityEstimator.class);
+    //	startService(intent);
+    	
+    	bindService(intent, mVelServiceConnection, Context.BIND_AUTO_CREATE);
+        if (register_with_VelocityService())
+        {
+    		Toast.makeText(GuesstimateVelocityBetter.this, "VelocityEstimator connected", Toast.LENGTH_SHORT).show();
+    		toggleUIStatus(true);
+        } else {
+        	toggleUIStatus(false);
+        }
+    }
+
+    private void unbindEstimateService()
+    {
+    	//Intent intent = new Intent(GuesstimateVelocityBetter.this, VelocityEstimator.class);
+        if (unregister_from_VelocityService())
+        {
+    		Toast.makeText(GuesstimateVelocityBetter.this, "VelocityEstimator disconnected", Toast.LENGTH_SHORT).show();    		
+        }
+        if ( mVelService != null ){
+        	unbindService(mVelServiceConnection);
+        }
+//    	stopService(intent);
+    	toggleUIStatus(false);
+    }
+
     private void startEstimateService()
     {
     	Intent intent = new Intent(GuesstimateVelocityBetter.this, VelocityEstimator.class);
     	startService(intent);
-    	register_with_VelocityService();
     	
     	bindService(intent, mVelServiceConnection, Context.BIND_AUTO_CREATE);
+    	register_with_VelocityService();
     	toggleUIStatus(true);
     }
     
@@ -1519,7 +1626,9 @@ public class GuesstimateVelocityBetter extends Activity {
     {
     	Intent intent = new Intent(GuesstimateVelocityBetter.this, VelocityEstimator.class);
     	unregister_from_VelocityService();
-    	unbindService(mVelServiceConnection);
+        if ( mVelService != null ){
+        	unbindService(mVelServiceConnection);
+        }
     	stopService(intent);
     	toggleUIStatus(false);
     }
@@ -1549,10 +1658,13 @@ public class GuesstimateVelocityBetter extends Activity {
        	findViewById(R.id.StopButton).setEnabled(recording);
 
 		TextView tv1 = (TextView) findViewById(R.id.EstimatorStatusTextView);
+		ScrollView sv = (ScrollView) findViewById(R.id.SettingsScrollView);
 		if ( recording ){
-			tv1.setText(String.format("Estimation running"));
+			tv1.setText(String.format("Estimation running"));			
+			sv.setVisibility( 8 ); // GONE
 		} else {
 			tv1.setText(String.format("Estimation not running"));
+			sv.setVisibility( 0 ); // VISIBLE
 		}
     }
 

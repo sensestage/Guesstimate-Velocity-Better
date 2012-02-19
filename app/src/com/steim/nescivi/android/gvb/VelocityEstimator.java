@@ -15,6 +15,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.os.PowerManager;
 import android.util.Log;
 //import android.view.ViewGroup.LayoutParams;
 //import android.widget.LinearLayout;
@@ -58,6 +59,9 @@ public class VelocityEstimator extends Service {
 //    private IncomingHandler mServiceHandler;
     
     private Context mContext;
+    
+    PowerManager pm;
+	PowerManager.WakeLock wl;
 
     static final int MSG_REGISTER_GUI_CLIENT = 1;
     static final int MSG_UNREGISTER_GUI_CLIENT = 2;
@@ -128,6 +132,8 @@ public class VelocityEstimator extends Service {
 	//float stats[][] = new float[2][3];
 	
 	private double mSpeed = 0.0;
+	private double mSpeedAccel = 0.0;
+	private double mAccPrecision = 1.0f;
 	private float[] mamean =  { (float) 0.0, (float) 0.0, (float) 0.0 };
 	private float[] mameanOff =  { (float) 0.0, (float) 0.0, (float) 0.0 };
 	private float mameanCoef = 0.99f;
@@ -151,6 +157,7 @@ public class VelocityEstimator extends Service {
 	private float threshold_deceleration_forward = 0.3f;
 	private float threshold_deceleration_mean = -0.1f;
 
+	private float maPrec = 0.99f;
 	private float speed_decay = 0.99f;
 	private float mean_weight = 0.65f;
 	private float raw_weight = 0.65f;
@@ -208,6 +215,7 @@ public class VelocityEstimator extends Service {
 				raw_weight = msg.getData().getFloat("raw_weight");
 				mameanCoef = msg.getData().getFloat("mean_coef");
 				speed_decay = msg.getData().getFloat("speed_decay");
+				maPrec = msg.getData().getFloat("ma_precision");
 				macoef = msg.getData().getFloat("offsetma");
 				forwardsign = msg.getData().getInt("signForward");
 				mMakeLocalLog = msg.getData().getBoolean("makeLocalLog");
@@ -257,7 +265,11 @@ public class VelocityEstimator extends Service {
     this.mUpdateTime = 10;
     this.mUpdateServerTime = 30000;
 	this.mUploadBuffer = new CircularStringArrayBuffer( this.mBufferSize );
-		
+
+	pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+	wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Velocity Estimator");
+	wl.acquire();
+
 	readPreferences();
 	startEstimation();
 	startServerAndLog();
@@ -297,6 +309,7 @@ public class VelocityEstimator extends Service {
 						//mStillTime,
 						currentReadings[0],currentReadings[1], currentReadings[2],
 						currentGPSReadings[0],currentGPSReadings[1],
+						(float) mSpeedAccel, (float) mSpeedAccel * 3.6f, (float) mAccPrecision,
 						mameanOff[0], mamean[0],
 						mameanOff[1], mamean[1],
 						mameanOff[2], mamean[2]
@@ -416,19 +429,21 @@ public class VelocityEstimator extends Service {
 
     	closeLocalLog();
 
+    	wl.release();
+    	
     }
 
-    /*
+    
     private void compute_speed()
     {
-    	float tot_weight = mGps_precision + mVelocity_precision;
-    	float gps_weight = mGps_precision / tot_weight;
-    	float vel_weight = mVelocity_precision / tot_weight;
+    	float [] currentGPSReadings = mGPSListener.getCurrentValues(); // speed, precision
+    	float tot_weight = currentGPSReadings[1] + (float) mAccPrecision;
+    	float gps_weight = currentGPSReadings[1] / tot_weight;
+    	float vel_weight = (float) mAccPrecision / tot_weight;
     	
-    	float speed_ms = (mVelocity_vec.mag() * vel_weight) + (mGps_speed * gps_weight);
-    	mSpeed = speed_ms * 3.6f;	// change scale to km/h
+    	mSpeed = mSpeedAccel * vel_weight + currentGPSReadings[1] * gps_weight; 
     }
-    */
+    
     
     private void send_location_msg()
     {
@@ -496,6 +511,7 @@ public class VelocityEstimator extends Service {
 	   	
        	mameanCoef = mPrefs.getFloat("mean_coef", 0.99f );
        	speed_decay = mPrefs.getFloat("speed_decay", 0.99f );
+       	maPrec = mPrefs.getFloat("ma_precision", 0.99f );
        	macoef = mPrefs.getFloat("offsetma", 0.99f );
 
    		forwardsign = 1.f;
@@ -706,6 +722,8 @@ public class VelocityEstimator extends Service {
     	Message msg = Message.obtain(null, MSG_GUI_UPDATE_MSG );
     	b.putInt("motion", mState );
     	b.putFloat("speed", (float) mSpeed );
+    	b.putFloat("speed_accel", (float) mSpeedAccel );
+    	b.putFloat("speed_accel_precision", (float) mAccPrecision );
     	
 		synchronized( this ){
 			b.putFloat("facc_mean", this.mCurrentStats[0][0] );
@@ -890,18 +908,23 @@ public class VelocityEstimator extends Service {
 		
 		// calculate forward speed
 		// limit speed increase when getting faster:
-		double limiterFactor = Math.exp( -1. * this.mSpeed * Math.PI / 10. );
+		double limiterFactor = Math.exp( -1. * this.mSpeedAccel * Math.PI / 10. );
 		double deltaspeed = (mean_weight*mameanOff[0] + raw_weight*currentReadings[0]) * this.mDeltaTime * 0.001;
 		if ( deltaspeed > 0 ){
-			this.mSpeed +=  deltaspeed * limiterFactor;
+			this.mSpeedAccel +=  deltaspeed * limiterFactor;
 		} else {
-			this.mSpeed +=  deltaspeed;
+			this.mSpeedAccel +=  deltaspeed;
 		}
 		if ( this.mState == 0 ){
-			this.mSpeed = this.mSpeed * speed_decay;
+			this.mSpeedAccel = this.mSpeedAccel * speed_decay;
 		}
-		this.mSpeed = Math.max( mSpeed, 0.0 );
-		
+		this.mSpeedAccel = Math.max( mSpeedAccel, 0.0 );
+
+		// calculate precision!
+		this.mAccPrecision = mAccPrecision * maPrec + (1-maPrec)*(Math.exp( -curStats[1][0] * Math.PI / 3.0f ) );
+
+		compute_speed();
+
 		/*
 		switch (this.mState){
 		case 0: // still
