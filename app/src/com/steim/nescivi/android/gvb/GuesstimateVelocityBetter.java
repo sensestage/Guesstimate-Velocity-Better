@@ -40,6 +40,7 @@ import java.util.StringTokenizer;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.app.ActivityManager;
 
 /*
 import java.util.Timer;
@@ -58,6 +59,7 @@ import java.io.IOException;
 public class GuesstimateVelocityBetter extends Activity {
 
 	Messenger mVelService = null;
+	public boolean mBound = false;
 //	Messenger mTransmitService = null;
 /*	
 	private String mHost;
@@ -128,6 +130,9 @@ public class GuesstimateVelocityBetter extends Activity {
     				tv.setText(String.format("%.5f", msg.getData().getFloat( "gacc_std" ) ) );
     				tv = (TextView) findViewById(R.id.OffsetTextView);
     				tv.setText(String.format("%.2f m/s", msg.getData().getFloat( "offset" ) ) );
+    				tv = (TextView) findViewById(R.id.OffsetGravTextView);
+    				tv.setText(String.format("%.2f m/s", msg.getData().getFloat( "offset_grav" ) ) );
+    				
     			//	tv = (TextView) findViewById(R.id.SignTextView);
     			//	tv.setText(String.format("%.0f ", msg.getData().getFloat( "sign" ) ) );
     			//	tv = (TextView) findViewById(R.id.StillTextView);
@@ -945,22 +950,22 @@ public class GuesstimateVelocityBetter extends Activity {
     		set_update_server();
 			*/
     		
-    		//send_server_settings();
-    		//send_estimate_settings();
+    		send_server_settings();
+    		send_estimate_settings();
 
     		
     		/*
     		setupBuffer();
     		setupUploader();
 		*/
-    	//	mBound = true;
+    		mBound = true;
     		Toast.makeText(GuesstimateVelocityBetter.this, "connected to VelocityEstimator", Toast.LENGTH_SHORT).show();
     	}
     	
     	public void onServiceDisconnected(ComponentName class_name)
     	{
     		mVelService = null;
-    	//	mBound = false;
+    		mBound = false;
     		Toast.makeText(GuesstimateVelocityBetter.this, "disconnected from VelocityEstimator", Toast.LENGTH_SHORT).show();
     	}
     };
@@ -1605,7 +1610,7 @@ public class GuesstimateVelocityBetter extends Activity {
         {
     		Toast.makeText(GuesstimateVelocityBetter.this, "VelocityEstimator disconnected", Toast.LENGTH_SHORT).show();    		
         }
-        if ( mVelService != null ){
+        if ( isMyServiceRunning() && mBound ){
         	unbindService(mVelServiceConnection);
         }
 //    	stopService(intent);
@@ -1622,15 +1627,25 @@ public class GuesstimateVelocityBetter extends Activity {
     	toggleUIStatus(true);
     }
     
+    private boolean isMyServiceRunning() {
+        ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if ("com.steim.nescivi.android.gvb.VelocityEstimator".equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
     private void stopEstimateService()
     {
     	Intent intent = new Intent(GuesstimateVelocityBetter.this, VelocityEstimator.class);
     	unregister_from_VelocityService();
-        if ( mVelService != null ){
+    	if ( isMyServiceRunning() && mBound ){
         	unbindService(mVelServiceConnection);
         }
     	stopService(intent);
-    	toggleUIStatus(false);
+        toggleUIStatus(false);
     }
 
 /*    
