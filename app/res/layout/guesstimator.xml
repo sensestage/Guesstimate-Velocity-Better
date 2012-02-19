@@ -66,8 +66,13 @@
 	      	  </TableRow>
 	  <TableRow>
 	    <TextView android:textAppearance="?android:attr/textAppearanceLarge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/ThresholdLabelTextView" android:text="Thresholds" android:layout_span="2"></TextView>
-	  </TableRow>            
+	  </TableRow>   
 	  <TableRow>
+	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/Still1LabelTextView" android:text="Gravity"></TextView>
+	    <EditText android:id="@+id/threshold_gravity" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.1">
+	    </EditText>
+	</TableRow>
+	  	  <TableRow>
 	    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/Still1LabelTextView" android:text="Still forward"></TextView>
 	    <EditText android:id="@+id/still_forward" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1" android:inputType="numberDecimal" android:text="0.04">
 	    </EditText>

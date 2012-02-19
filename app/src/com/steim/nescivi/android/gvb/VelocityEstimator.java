@@ -145,6 +145,8 @@ public class VelocityEstimator extends Service {
 	private int mState = 0;
 	//private float mStillTime = 0.0f;
 
+	private float threshold_gravity = 0.1f;
+
 	private float threshold_still_side = 0.04f;
 	private float threshold_still_forward = 0.04f;
 
@@ -203,6 +205,7 @@ public class VelocityEstimator extends Service {
 				set_gravity_axis( msg.getData().getInt("gravity") );
 				mWindowSize = msg.getData().getInt("window");
 				mUpdateTime = msg.getData().getInt("updateTime");
+				threshold_gravity = msg.getData().getFloat("threshold_gravity");
 				threshold_acceleration_forward = msg.getData().getFloat("acceleration_forward");
 				threshold_acceleration_mean = msg.getData().getFloat("acceleration_mean");
 				threshold_deceleration_forward = msg.getData().getFloat("deceleration_forward");
@@ -495,6 +498,8 @@ public class VelocityEstimator extends Service {
 	   	
 	   	mWindowSize = mPrefs.getInt("window", 200 );
 	   	mUpdateTime = mPrefs.getInt("updateTime", 10 );
+
+	   	threshold_gravity = mPrefs.getFloat("threshold_gravity", 0.1f );
 	     
 	   	threshold_acceleration_forward = mPrefs.getFloat("acceleration_forward", 0.2f );
 	   	threshold_acceleration_mean = mPrefs.getFloat("acceleration_mean", 0.1f );
@@ -846,6 +851,12 @@ public class VelocityEstimator extends Service {
 		// substract offset from mean
 		for ( int axis = 0; axis < 3; axis++ ){
 			mameanOff[axis] = mamean[axis] - this.mOffsets[axis];  
+		}
+		
+		if ( Math.abs( mameanOff[2] ) > threshold_gravity ){
+			// sensor is tilted
+			float correctionFactor = mamean[2] / this.mOffsets[2];
+			mameanOff[0] = correctionFactor * mamean[0] - this.mOffsets[0];
 		}
 		
 		// correct sign for forward axis
