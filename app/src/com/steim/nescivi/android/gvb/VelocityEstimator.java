@@ -527,7 +527,8 @@ public class VelocityEstimator extends Service {
  
   /// --------- DATA UPLOADER -------------
     private String formatDate(Date date) {
-		String format = "yyyy-MM-dd HH:mm:ss";
+		//String format = "yyyy-MM-dd HH:mm:ss";
+		String format = "HH:mm:ss";
 		SimpleDateFormat formatter = new SimpleDateFormat(format);
 		return formatter.format(date); 	
 	}
