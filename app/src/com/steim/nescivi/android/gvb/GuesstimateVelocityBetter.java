@@ -32,7 +32,7 @@ import android.widget.Toast;
 import android.content.SharedPreferences;
 
 import android.view.WindowManager;
-import android.view.View;
+//import android.view.View;
 
 
 import java.util.Calendar;
@@ -1015,7 +1015,8 @@ public class GuesstimateVelocityBetter extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.guesstimator);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        // not needed anymore, as we are setting the wakelock in the service.
+    //    getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
         
     public void readPreferences(){
