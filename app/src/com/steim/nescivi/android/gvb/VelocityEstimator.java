@@ -441,7 +441,7 @@ public class VelocityEstimator extends Service {
     	float gps_weight = currentGPSReadings[1] / tot_weight;
     	float vel_weight = (float) mAccPrecision / tot_weight;
     	
-    	mSpeed = mSpeedAccel * vel_weight + currentGPSReadings[1] * gps_weight; 
+    	mSpeed = (mSpeedAccel * vel_weight) + (currentGPSReadings[1] * gps_weight); 
     }
     
     
@@ -522,7 +522,7 @@ public class VelocityEstimator extends Service {
  
   /// --------- DATA UPLOADER -------------
     private String formatDate(Date date) {
-		String format = "yy-MM-dd HH:mm:ss";
+		String format = "yyyy-MM-dd HH:mm:ss";
 		SimpleDateFormat formatter = new SimpleDateFormat(format);
 		return formatter.format(date); 	
 	}
@@ -733,6 +733,7 @@ public class VelocityEstimator extends Service {
 			b.putFloat("gacc_mean", this.mCurrentStats[0][2] );
 			b.putFloat("gacc_std", this.mCurrentStats[1][2]  );
 			b.putFloat("offset", this.mOffsets[0]  );
+			b.putFloat("offset_grav", this.mOffsets[2]  );
 		}
     	b.putFloat("sign", this.forwardsign );
 //    	b.putFloat("stilltime", this.mStillTime );
@@ -910,7 +911,7 @@ public class VelocityEstimator extends Service {
 		// limit speed increase when getting faster:
 		double limiterFactor = Math.exp( -1. * this.mSpeedAccel * Math.PI / 10. );
 		double deltaspeed = (mean_weight*mameanOff[0] + raw_weight*currentReadings[0]) * this.mDeltaTime * 0.001;
-		if ( deltaspeed > 0 ){
+		if ( (deltaspeed > 0.0f) && (mSpeedAccel > 15.0) ){ // only limit when above 15.0 m/s
 			this.mSpeedAccel +=  deltaspeed * limiterFactor;
 		} else {
 			this.mSpeedAccel +=  deltaspeed;
