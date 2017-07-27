@@ -85,7 +85,7 @@ class WarningEmailer(object):
 
 		self.subject = "CVBS Warning"
 
-		self.sender = "CVBS Server <stock@mrstockinterfaces.com>"
+		self.sender = "CVBS Server <spamxxx@example.com>"
 
 	def set_subject(self, subject):
 		self.subject = subject
@@ -275,8 +275,8 @@ class ConfigFile(object):
 			'verbose':0 },
 		'emailer':{
 			'smtphost':'smtp.xs4all.nl',
-			'sender':'CVBS Server <stock@mrstockinterfaces.com>',
-			'recipients':'stock@mrstockinterfaces.com,taosambolec@gmail.com',
+			'sender':'CVBS Server <spamxxx@example.com>',
+			'recipients':'CVBS Server <spamxxx@example.com>',
 			'subject':'CVBS Warning' }
 	}
 
